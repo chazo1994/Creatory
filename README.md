@@ -41,49 +41,101 @@ sql/migrations/
 docs/
 ```
 
-## Quick Start (Full Stack)
+## Prerequisites (Install Required Packages)
 
-1. Create env file:
+Required tooling:
+
+- Docker + Docker Compose v2
+- Python 3.12
+- Node.js 20+ and npm
+- GNU Make
+- Git
+
+Install by command line (macOS + Homebrew):
+
+```bash
+brew update
+brew install git make python@3.12 node@20
+brew install --cask docker
+```
+
+Then verify your toolchain:
+
+```bash
+docker --version
+docker compose version
+python3 --version
+node --version
+npm --version
+make --version
+```
+
+## Run The System From Command Line
+
+### Option A: Full Stack with Docker (recommended)
 
 ```bash
 cp .env.example .env
+make compose-up
 ```
 
-2. Start all services:
-
-```bash
-docker compose up --build
-```
-
-3. Open apps:
+Open:
 
 - Frontend Studio: http://localhost:3000
 - API Docs (Swagger): http://localhost:8000/docs
 - API Docs (ReDoc): http://localhost:8000/redoc
 
-## Dev Mode (Hot Reload)
+Stop services:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+make compose-down
 ```
 
-## Local Backend Development
+### Option B: Docker Dev Mode (hot reload)
+
+```bash
+cp .env.example .env
+make compose-up-dev
+```
+
+### Option C: Local CLI Development (without running API/frontend in containers)
+
+1. Prepare env and use localhost for DB/Redis in `.env`:
+
+```bash
+cp .env.example .env
+# DATABASE_URL=postgresql+asyncpg://creatory:creatory@localhost:5432/creatory
+# REDIS_URL=redis://localhost:6379/0
+```
+
+2. Start only data services:
+
+```bash
+docker compose up -d db redis
+```
+
+3. Start backend API:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e .[dev]
-cp .env.example .env
-alembic upgrade head
-uvicorn app.main:app --reload
+make install
+make migrate
+make run
 ```
 
-## Local Frontend Development
+4. In a second terminal, start worker:
 
 ```bash
-cd frontend
-npm install
-npm run dev
+source .venv/bin/activate
+make run-worker
+```
+
+5. In a third terminal, start frontend:
+
+```bash
+make frontend-install
+make frontend-dev
 ```
 
 ## Core API Modules
