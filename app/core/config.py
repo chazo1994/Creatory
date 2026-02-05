@@ -24,10 +24,15 @@ class Settings(BaseSettings):
     sql_echo: bool = False
     db_pool_size: int = Field(default=10, alias="DB_POOL_SIZE")
     db_max_overflow: int = Field(default=20, alias="DB_MAX_OVERFLOW")
+    redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
 
     jwt_secret_key: str = Field(default="change-me-in-production", alias="JWT_SECRET_KEY")
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24
+    director_default_agent_slug: str = Field(
+        default="main-director",
+        alias="DIRECTOR_DEFAULT_AGENT_SLUG",
+    )
 
     cors_origins: list[str] = Field(default_factory=list, alias="CORS_ORIGINS")
 

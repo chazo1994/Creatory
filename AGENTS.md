@@ -112,6 +112,79 @@ Chúng tôi mong đợi sự đóng góp ở 3 mảng chính:
 3. **Specialized Agents:** Xây dựng các Agent Persona chuyên biệt (Ví dụ: Agent chuyên phân tích thuật toán TikTok, Agent chuyên chỉnh sửa màu sắc video).
 
 ---
+Đúng là thiếu sót lớn nếu một sản phẩm **Creator-First** mà không có một giao diện (Frontend) cực đỉnh. Đối với Creator, trải nghiệm thị giác và thao tác kéo thả (UX/UI) quan trọng ngang ngửa với sức mạnh của AI.
+
+Dưới đây là phần bổ sung chi tiết về **Frontend Architecture** để đưa vào tài liệu, đảm bảo tính "Production-ready" và hỗ trợ cộng đồng dễ dàng đóng góp.
+
+---
+
+## 🎨 7. Frontend Architecture: The Creator Studio
+
+Giao diện được thiết kế theo phong cách **Bento Grid** hiện đại, tập trung vào việc giảm thiểu số click và tối đa hóa không gian sáng tạo.
+
+### 7.1. Tech Stack Khuyến nghị
+
+* **Framework:** Next.js 14/15 (App Router) - Tối ưu SEO cho các trang public của creator.
+* **State Management:** TanStack Query (React Query) + Zustand (cho nhẹ và nhanh).
+* **UI Component:** ShadcnUI + TailwindCSS.
+* **Workflow Engine:** **React Flow** (Dành riêng cho khu vực chỉnh sửa Node-based Agentic Workflow).
+* **Real-time:** WebSockets hoặc Server-Sent Events (SSE) để stream câu trả lời từ Agent và cập nhật tiến độ render media.
+
+### 7.2. Các phân khu chức năng (Core Modules)
+
+| Module | Chức năng chính | Key Features |
+| --- | --- | --- |
+| **Dual-Chat Interface** | Giao diện tương tác chính | Chia màn hình: Main Chat (Trái) & Side-bar Chat (Phải). Hỗ trợ Markdown, Code Highlight, và Media Preview trực tiếp. |
+| **Visual Workflow Editor** | Khu vực tùy chỉnh "khung xương" | Giao diện kéo thả Nodes. Cho phép Creator nhìn thấy luồng tư duy của Agent. Có nút "Run Step-by-Step" để debug. |
+| **Media Asset Manager** | Quản lý thành phẩm | Nơi lưu trữ ảnh, video, audio đã tạo. Có trình xem (Viewer) và trình chỉnh sửa nhanh (Quick Editor). |
+| **Prompt Engineering Lab** | Tinh chỉnh "linh hồn" Agent | Khu vực dành cho contributor và user nâng cao để test các System Prompts và Tool parameters. |
+
+### 7.3. Cơ chế "Injection" UI (Frontend Logic)
+
+* Tại Side-bar Chat, mỗi block kết quả (ví dụ một đoạn script hoặc link ảnh) sẽ có một button **"Add to Main Project"**.
+* Khi click, Frontend sẽ gán một `Reference ID` từ Side-chat vào Context của Main Chat thông qua API, giúp Agent chính nhận diện được dữ liệu đó mà không cần user phải copy-paste.
+
+---
+
+## 🏗️ 8. Production-Ready Deployment (Full-stack)
+
+Để dự án thực sự là một Open Source Framework chuẩn chỉnh, cấu trúc Docker ví dụ mẫu:
+
+```yaml
+# docker-compose.yml (Phác thảo)
+services:
+  frontend:
+    build: ./frontend
+    ports: ["3000:3000"]
+    environment: [NEXT_PUBLIC_API_URL]
+    
+  backend-api:
+    build: ./backend
+    depends_on: [db, redis]
+    
+  agent-orchestrator:
+    build: ./agents
+    # Chạy LangGraph / LangServe
+    
+  db:
+    image: ankane/pgvector # Postgres hỗ trợ Vector
+    
+  redis:
+    image: redis:alpine # Quản lý hàng chờ render media và cache chat
+
+```
+
+---
+
+## 🚢 9. Hướng dẫn đóng góp Frontend (Frontend Contributors)
+
+Chúng tôi tìm kiếm các đóng góp về:
+
+1. **Custom Nodes:** Thiết kế các UI components cho từng loại Agent Node (VD: Node tạo ảnh có thanh slider chỉnh Aspect Ratio).
+2. **Theme Engine:** Hỗ trợ Dark/Light mode và các Theme tùy biến cho Creator.
+3. **Performance Optimization:** Xử lý render các danh sách media lớn (Virtual Scroll) và tối ưu hóa việc stream dữ liệu từ AI.
+
+---
 
 ## 📈 7. Roadmap Phát triển
 
@@ -119,6 +192,7 @@ Chúng tôi mong đợi sự đóng góp ở 3 mảng chính:
 * [ ] **Sprint 2:** RAG Integration & Basic MCP Tools (Text/Image).
 * [ ] **Sprint 3:** Visual Node Editor (Agentic Workflow).
 * [ ] **Sprint 4:** Video/Audio Generation Pipeline & Community Templates.
+* [ ] **Sprint 5:** Full hệ thống, production ready + front end.
 
 ---
 

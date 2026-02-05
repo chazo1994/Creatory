@@ -5,14 +5,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
-from app.db.models import (
-    ContextInjection,
-    Conversation,
-    Message,
-    Thread,
-    User,
-    WorkspaceMembership,
+from app.api.permissions import (
+    ensure_conversation_member,
+    ensure_thread_in_conversation,
+    ensure_workspace_member,
 )
+from app.db.models import ContextInjection, Conversation, Message, Thread, ThreadKind, User
 from app.db.session import get_db_session
 from app.schemas.conversation import (
     ContextInjectionCreateRequest,
@@ -28,52 +26,13 @@ from app.schemas.conversation import (
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 
 
-async def _workspace_member_or_404(
-    db: AsyncSession,
-    workspace_id: uuid.UUID,
-    user_id: uuid.UUID,
-) -> None:
-    membership = await db.scalar(
-        select(WorkspaceMembership).where(
-            WorkspaceMembership.workspace_id == workspace_id,
-            WorkspaceMembership.user_id == user_id,
-        )
-    )
-    if membership is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Workspace not found")
-
-
-async def _conversation_for_user_or_404(
-    db: AsyncSession,
-    conversation_id: uuid.UUID,
-    user_id: uuid.UUID,
-) -> Conversation:
-    conversation = await db.get(Conversation, conversation_id)
-    if conversation is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
-
-    await _workspace_member_or_404(db, conversation.workspace_id, user_id)
-    return conversation
-
-
-async def _thread_for_conversation_or_404(
-    db: AsyncSession,
-    thread_id: uuid.UUID,
-    conversation_id: uuid.UUID,
-) -> Thread:
-    thread = await db.get(Thread, thread_id)
-    if thread is None or thread.conversation_id != conversation_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found")
-    return thread
-
-
 @router.post("", response_model=ConversationRead, status_code=status.HTTP_201_CREATED)
 async def create_conversation(
     payload: ConversationCreateRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> ConversationRead:
-    await _workspace_member_or_404(db, payload.workspace_id, current_user.id)
+    await ensure_workspace_member(db, payload.workspace_id, current_user.id)
 
     conversation = Conversation(
         workspace_id=payload.workspace_id,
@@ -81,6 +40,26 @@ async def create_conversation(
         title=payload.title,
     )
     db.add(conversation)
+    await db.flush()
+
+    # Every conversation starts with a main thread and one quick side thread.
+    db.add(
+        Thread(
+            conversation_id=conversation.id,
+            kind=ThreadKind.MAIN,
+            parent_thread_id=None,
+            created_by=current_user.id,
+        )
+    )
+    db.add(
+        Thread(
+            conversation_id=conversation.id,
+            kind=ThreadKind.QUICK,
+            parent_thread_id=None,
+            created_by=current_user.id,
+        )
+    )
+
     await db.commit()
     await db.refresh(conversation)
     return ConversationRead.model_validate(conversation)
@@ -94,7 +73,7 @@ async def list_conversations(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> list[ConversationRead]:
-    await _workspace_member_or_404(db, workspace_id, current_user.id)
+    await ensure_workspace_member(db, workspace_id, current_user.id)
 
     result = await db.scalars(
         select(Conversation)
@@ -106,17 +85,21 @@ async def list_conversations(
     return [ConversationRead.model_validate(item) for item in result.all()]
 
 
-@router.post("/{conversation_id}/threads", response_model=ThreadRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{conversation_id}/threads",
+    response_model=ThreadRead,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_thread(
     conversation_id: uuid.UUID,
     payload: ThreadCreateRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> ThreadRead:
-    conversation = await _conversation_for_user_or_404(db, conversation_id, current_user.id)
+    conversation = await ensure_conversation_member(db, conversation_id, current_user.id)
 
     if payload.parent_thread_id is not None:
-        await _thread_for_conversation_or_404(db, payload.parent_thread_id, conversation.id)
+        await ensure_thread_in_conversation(db, payload.parent_thread_id, conversation.id)
 
     thread = Thread(
         conversation_id=conversation_id,
@@ -136,7 +119,7 @@ async def list_threads(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> list[ThreadRead]:
-    await _conversation_for_user_or_404(db, conversation_id, current_user.id)
+    await ensure_conversation_member(db, conversation_id, current_user.id)
 
     result = await db.scalars(
         select(Thread)
@@ -154,8 +137,8 @@ async def create_message(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> MessageRead:
-    await _conversation_for_user_or_404(db, conversation_id, current_user.id)
-    await _thread_for_conversation_or_404(db, thread_id, conversation_id)
+    await ensure_conversation_member(db, conversation_id, current_user.id)
+    await ensure_thread_in_conversation(db, thread_id, conversation_id)
 
     message = Message(
         thread_id=thread_id,
@@ -179,8 +162,8 @@ async def list_messages(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> list[MessageRead]:
-    await _conversation_for_user_or_404(db, conversation_id, current_user.id)
-    await _thread_for_conversation_or_404(db, thread_id, conversation_id)
+    await ensure_conversation_member(db, conversation_id, current_user.id)
+    await ensure_thread_in_conversation(db, thread_id, conversation_id)
 
     result = await db.scalars(
         select(Message)
@@ -203,18 +186,24 @@ async def inject_context(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> ContextInjectionRead:
-    await _conversation_for_user_or_404(db, conversation_id, current_user.id)
-    await _thread_for_conversation_or_404(db, payload.from_thread_id, conversation_id)
-    await _thread_for_conversation_or_404(db, payload.to_thread_id, conversation_id)
+    await ensure_conversation_member(db, conversation_id, current_user.id)
+    await ensure_thread_in_conversation(db, payload.from_thread_id, conversation_id)
+    await ensure_thread_in_conversation(db, payload.to_thread_id, conversation_id)
 
     from_message = await db.get(Message, payload.from_message_id)
     if from_message is None or from_message.thread_id != payload.from_thread_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Source message not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Source message not found",
+        )
 
     if payload.to_message_id:
         to_message = await db.get(Message, payload.to_message_id)
         if to_message is None or to_message.thread_id != payload.to_thread_id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target message not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Target message not found",
+            )
 
     injection = ContextInjection(
         conversation_id=conversation_id,

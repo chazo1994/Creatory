@@ -6,6 +6,9 @@ install:
 run:
 	uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
+run-worker:
+	python -m app.worker
+
 migrate:
 	alembic upgrade head
 
@@ -15,6 +18,7 @@ downgrade:
 lint:
 	ruff check app tests
 	black --check app tests
+	cd frontend && npm run lint
 
 format:
 	ruff check --fix app tests
@@ -34,3 +38,12 @@ compose-up-dev:
 
 compose-down:
 	docker compose down
+
+frontend-install:
+	cd frontend && npm install
+
+frontend-dev:
+	cd frontend && npm run dev
+
+frontend-build:
+	cd frontend && npm run build

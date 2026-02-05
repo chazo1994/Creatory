@@ -16,6 +16,7 @@ This guide defines how to contribute safely and consistently.
 1. MCP Tools: add MCP servers/tools for generation, editing, scraping, search, analytics.
 2. Agent Personas: add specialized agents for specific creator workflows.
 3. Workflow Templates: add reusable chat-based and node-based creator pipelines.
+4. Frontend Studio: improve dual-chat UX, workflow editor nodes, and media/prompt modules.
 
 ## 3. Branch and Commit Rules
 
@@ -98,6 +99,7 @@ An agent persona PR should include:
 - Prefer typed/validated schemas over implicit maps.
 - Add logs for orchestration-critical operations.
 - Avoid hidden side effects in tool execution paths.
+- Ensure frontend changes pass `npm run lint` and `npm run build` in `frontend/`.
 
 ## 9. Security and Privacy
 

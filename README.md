@@ -1,13 +1,26 @@
 # Creatory
 
-Creator-first, multi-agent orchestration framework for building content workflows.
+Creator-first open-source framework for orchestrating AI agents and tools to produce content.
+
+## What Is Included
+
+- `Main Director Agent` orchestration runtime for dual-stream conversations.
+- `Dual-Chat` model with context injection from quick stream to main stream.
+- `Workflow Templates` + visual node-based execution model.
+- `MCP Registry` for MCP servers, tools, and tool invocation traces.
+- `Hybrid RAG primitives` for knowledge sources/chunks and graph concepts.
+- `Media Asset Manager` to track generated artifacts.
+- `Frontend Creator Studio` (Next.js + React Flow + TanStack Query + Zustand).
+- Production stack via Docker Compose: API, agent worker, PostgreSQL+pgvector, Redis, frontend.
 
 ## Tech Stack
 
-- Backend: FastAPI
+- Backend: FastAPI, SQLAlchemy (async), Alembic
+- Orchestration: agent run/task model + workflow run/step runtime
 - Database: PostgreSQL + pgvector
-- Orchestration model: Main Director Agent + dual-stream conversation + agentic workflow runtime
-- DevOps: Docker Compose + Alembic + pre-commit + CI
+- Cache/queue base: Redis
+- Frontend: Next.js App Router, Tailwind, React Flow, TanStack Query, Zustand
+- DevOps: Docker Compose, pre-commit, GitHub Actions
 
 ## Project Structure
 
@@ -17,47 +30,73 @@ app/
   core/
   db/
   schemas/
+  services/
+  worker.py
+frontend/
+  app/
+  components/
+  lib/
 alembic/
-docs/
-scripts/
 sql/migrations/
+docs/
 ```
 
-## Quick Start
+## Quick Start (Full Stack)
 
-1. Copy env file:
+1. Create env file:
 
 ```bash
 cp .env.example .env
 ```
 
-2. Start production-like services:
+2. Start all services:
 
 ```bash
 docker compose up --build
 ```
 
-3. Open API docs:
+3. Open apps:
 
-- Swagger: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- Frontend Studio: http://localhost:3000
+- API Docs (Swagger): http://localhost:8000/docs
+- API Docs (ReDoc): http://localhost:8000/redoc
 
-For hot-reload local development with Docker:
+## Dev Mode (Hot Reload)
 
 ```bash
-make compose-up-dev
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
-## Local Development
+## Local Backend Development
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .[dev]
 cp .env.example .env
-make migrate
-make run
+alembic upgrade head
+uvicorn app.main:app --reload
 ```
+
+## Local Frontend Development
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Core API Modules
+
+- `/api/v1/auth`: register, login, token, me
+- `/api/v1/workspaces`: create/list/get
+- `/api/v1/conversations`: conversations, threads, messages, context injection
+- `/api/v1/orchestration`: director chat turn, run detail, SSE stream
+- `/api/v1/agents`: agent catalog and runs
+- `/api/v1/workflows`: template CRUD and workflow execution
+- `/api/v1/mcp`: MCP server/tool registry and invocation
+- `/api/v1/assets`: media asset CRUD
+- `/api/v1/knowledge`: sources and chunks
 
 ## Useful Commands
 
@@ -65,30 +104,20 @@ make run
 - `make format`
 - `make test`
 - `make migrate`
-- `make downgrade`
+- `make run-worker`
 - `make compose-up`
 - `make compose-up-dev`
 - `make compose-down`
+- `make frontend-install`
+- `make frontend-dev`
+- `make frontend-build`
 
-## Initial API Scope
-
-- Auth: register, login, token, me
-- Workspaces: create, list, get
-- Conversations: create, list
-- Threads: create, list
-- Messages: create, list
-- Context injection from side thread to main thread
-
-## Database and Migrations
+## Migrations
 
 - Alembic config: `alembic.ini`
-- Migration runtime: `alembic/env.py`
-- Initial revision: `alembic/versions/20260206_0001_base_schema.py`
-- Upgrade SQL: `sql/migrations/0001_base_schema.up.sql`
-- Downgrade SQL: `sql/migrations/0001_base_schema.down.sql`
+- Current revision: `alembic/versions/20260206_0001_base_schema.py`
+- SQL source: `sql/migrations/0001_base_schema.up.sql`, `sql/migrations/0001_base_schema.down.sql`
 
-When using Docker Compose, `migrate` service runs `alembic upgrade head` before API starts.
+## Contributing
 
-## Contribution
-
-See `CONTRIBUTING.md`.
+Read `CONTRIBUTING.md` for MCP tools, workflow templates, and agent persona contribution standards.

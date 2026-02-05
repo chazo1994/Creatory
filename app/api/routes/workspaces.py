@@ -9,6 +9,7 @@ from app.core.utils import slugify
 from app.db.models import MembershipRole, User, Workspace, WorkspaceMembership
 from app.db.session import get_db_session
 from app.schemas.workspace import WorkspaceCreateRequest, WorkspaceRead
+from app.services.workspace_bootstrap import bootstrap_workspace_defaults
 
 router = APIRouter(prefix="/workspaces", tags=["workspaces"])
 
@@ -46,6 +47,8 @@ async def create_workspace(
         role=MembershipRole.OWNER,
     )
     db.add(membership)
+
+    await bootstrap_workspace_defaults(db, workspace)
 
     await db.commit()
     await db.refresh(workspace)

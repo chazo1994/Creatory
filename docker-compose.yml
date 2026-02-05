@@ -17,6 +17,18 @@ services:
       timeout: 5s
       retries: 20
 
+  redis:
+    image: redis:7-alpine
+    container_name: creatory-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   migrate:
     build:
       context: .
@@ -41,6 +53,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     healthcheck:
@@ -49,6 +63,35 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  agent-orchestrator:
+    build:
+      context: .
+    container_name: creatory-agent-orchestrator
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: ["python", "-m", "app.worker"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: creatory-frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   pgdata:

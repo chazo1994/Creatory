@@ -22,7 +22,9 @@ def get_password_hash(password: str) -> str:
 
 
 def create_access_token(subject: str, expires_delta: timedelta | None = None) -> str:
-    expire = datetime.now(UTC) + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
+    expire = datetime.now(UTC) + (
+        expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
+    )
     to_encode: dict[str, Any] = {"sub": subject, "exp": expire}
     return jwt.encode(to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
