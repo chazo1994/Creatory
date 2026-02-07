@@ -40,8 +40,21 @@ async function request<T>(
   });
 
   if (!response.ok) {
-    const payload = (await response.json().catch(() => ({}))) as { detail?: string };
-    throw new Error(payload.detail ?? `Request failed with status ${response.status}`);
+    const payload = (await response.json().catch(() => ({}))) as {
+      detail?: string | Array<{ loc?: Array<string | number>; msg?: string }>;
+    };
+    const detail = payload.detail;
+    if (Array.isArray(detail)) {
+      const message = detail
+        .map((item) => {
+          const loc = (item.loc ?? []).filter((part) => part !== "body").join(".");
+          const label = loc ? `${loc}: ` : "";
+          return `${label}${item.msg ?? "Invalid value"}`;
+        })
+        .join("; ");
+      throw new Error(message || `Request failed with status ${response.status}`);
+    }
+    throw new Error((detail as string) ?? `Request failed with status ${response.status}`);
   }
 
   return (await response.json()) as T;
