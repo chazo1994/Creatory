@@ -7,6 +7,7 @@
 creatory/
 ├── creatory_core/           # 🧠 The "Brain" (Backend Engine)
 │   ├── agents/              # Multi-Agent Orchestration & Personas
+│   ├── providers/           # 🔌 [NEW] Provider Abstraction Layer (PAL) for llm and model services (egs: openai, gemini, vllm, ollam,...).
 │   ├── api/                 # Interface layer (Versioned via URL routing)
 │   ├── db/                  # Persistent data & Vector storage
 │   ├── rag/                 # Knowledge retrieval (Hybrid Vector + Graph)
@@ -15,7 +16,10 @@ creatory/
 ├── creatory_studio/         # 🎨 The "Workshop" (Frontend Interface)
 │   ├── src/
 │   │   ├── app/             # Application routing & page structure
-│   │   ├── components/      # UI modules (Chat, Workflow Editor, Library)
+│   │   │   ├── chat/        # 💬 The Main Interface (Chat-First UX)
+│   │   │   ├── library/     # 📂 (Was Dashboard) Simple Sidebar for History
+│   │   │   └── settings/    # ⚙️ Provider & Key Management
+│   │   ├── components/      # UI modules (Chat, Workflow Visualizer, Library)
 │   │   ├── hooks/           # Reusable frontend logic (SSE, Context Injection)
 │   │   ├── lib/             # Utility functions & API clients
 │   │   └── store/           # Global state management (Zustand)
@@ -41,6 +45,8 @@ creatory/
 * **`agents/`**: This is the heart of the "Intellectual OS."
 * **Purpose:** To host the **Main Director Agent** (Planning/Delegation) and the **Explainer Agent** (Contextual Q&A). It uses stateful logic (LangGraph) to maintain the long-term context of a content project.
 
+* **providers/ (The Hybrid Adaptor)**:
+* **Purpose**: Decouples the system from specific AI vendors.
 
 * **`api/`**: The system's gateway.
 * **Purpose:** Exposes functionality to the Studio. Versioning (e.g., `/api/v1/`) is implemented at the routing level in code, keeping the folder structure flat and maintainable.
@@ -57,9 +63,8 @@ creatory/
 
 #### 🎨 `creatory_studio` (Frontend Studio)
 
-* **`components/chat/`**: The Dual-Interaction interface.
-* **Purpose:** Manages the Main Conversation and the **Contextual Popups**. It handles text selection triggers and the "Injection" UI.
-
+* **`app/chat/` (The Chat-First UX)**: The Dual-Interaction interface.
+* **Purpose:** Manages the Main Conversation and the **Contextual Popups**. It handles text selection triggers and the "Injection" UI. Also have project management.
 
 * **`components/workflow/`**: The Visual Reasoning Editor.
 * **Purpose:** Built on **React Flow**, this allows creators to tweak the "Agentic Workflow" (not code) using a drag-and-drop interface.

@@ -1,114 +1,137 @@
-# 🗺️ CREATORY: VERTICAL SLICE ROADMAP (12-WEEK SPRINT)
+# 🗺️ CREATORY: VERTICAL SLICE ROADMAP
 
-**Chiến lược:** Product-First & Local-First.
-**Tiêu chí:** Mỗi Phase đều phải release được một tính năng chạy trọn vẹn từ Backend $\rightarrow$ Frontend $\rightarrow$ AI Output.
-
----
-
-## 🚩 PHASE 1: THE "HELLO WORLD" CREATOR (Tuần 1 - 4)
-**Mục tiêu:** Xây dựng một "Local Creative Engine" tối giản. Người dùng có thể tạo một **Project**, upload tài liệu, và yêu cầu AI thực hiện chuỗi tác vụ đa phương tiện (Research + Write + Draw + Speak).
-
-### 🎯 Deliverable (Kết quả bàn giao)
-Một ứng dụng chạy local (Docker) cho phép:
-1.  Tạo Project "Youtube Script A".
-2.  Upload PDF/Text (RAG cơ bản).
-3.  Chat: "Hãy nghiên cứu chủ đề này, viết kịch bản, tạo ảnh thumbnail và đọc lời thoại mở đầu."
-4.  Kết quả: Text kịch bản + 1 File Ảnh + 1 File Audio.
-
-### ✅ Detailed Checklist & Tasks
-
-#### 1. Core Architecture (Backend & Project Structure)
-- [ ] **Init Repo:** Cấu trúc Monorepo (FastAPI + Next.js).
-- [ ] **Project-Centric DB:** Thiết kế Schema PostgreSQL/SQLite tập trung vào `ProjectID`.
-    - *Lưu ý:* Mọi file upload, vector index, và lịch sử chat đều phải gắn với `project_id`, không phải global.
-- [ ] **Local LLM Integration:**
-    - [ ] Hỗ trợ chuyển đổi: OpenAI (Cloud) $\leftrightarrow$ Ollama (Local) qua biến môi trường `.env`.
-- [ ] **Safety Layer (Circuit Breaker v1):**
-    - [ ] Implement `max_steps=10` hard-limit trong vòng lặp LangGraph để chống treo máy.
-
-#### 2. AI Tools (Simple Binding - No MCP Server yet)
-*Tích hợp trực tiếp function vào Agent để chạy được ngay.*
-- [ ] **Simple RAG (NotebookLM style):**
-    - [ ] Sử dụng `ChromaDB` (local). Upload file $\rightarrow$ Chunking $\rightarrow$ Retrieval.
-- [ ] **Web Search:** Tích hợp Tavily API (Free tier).
-- [ ] **Image Gen:** Tích hợp Flux (qua API HuggingFace hoặc Local mock) hoặc DALL-E 3.
-- [ ] **Text-to-Speech (TTS):** Tích hợp `Edge-TTS` (Python library, miễn phí, chạy local ngon) hoặc gTTS đơn giản.
-
-#### 3. Frontend (MVP)
-- [ ] **Project Dashboard:** Danh sách các dự án đã tạo.
-- [ ] **Chat Interface:** Giao diện chat đơn giản (như ChatGPT).
-- [ ] **Media Rendering:**
-    - [ ] Hiển thị ảnh Markdown `![image](url)` ngay trong khung chat.
-    - [ ] Hiển thị Audio Player `<audio>` ngay dưới tin nhắn AI.
+**Philosophy:** "Ship early, ship complete features."
+**Core Tech Stack:** FastAPI, LangGraph, Next.js 15, PostgreSQL (pgvector), Docker.
 
 ---
 
-## 🚩 PHASE 2: DUAL-STREAM & VISUAL VIEWER (Tuần 5 - 8)
-**Mục tiêu:** Nâng cấp trải nghiệm UX độc nhất (USP). Tách luồng "Sáng tạo" và "Tra cứu". Hiển thị quy trình tư duy của Agent dưới dạng hình ảnh.
+### 📦 Phase 1: The "Genesis" Slice (Week 1 - 4)
+**Goal:** Build the skeleton and **01 complete use-case** (Example: "Create a Podcast Script with a cover image and a sample voiceover"). Users can configure providers directly in the UI.
 
-### 🎯 Deliverable (Kết quả bàn giao)
-1.  Giao diện 2 cột: Main Editor & Context Chat.
-2.  Tính năng "Bridge Injection" (Bắn tin từ phụ sang chính).
-3.  Tab "Workflow View": Nhìn thấy sơ đồ Agent đang chạy (Read-only).
+#### 1. Infrastructure & Core Backend (Week 1)
+*   **Architecture Setup:**
+    *   [ ] Initialize Monorepo: `/core` (FastAPI), `/studio` (Next.js), `/workers` (Celery/Arq for background tasks).
+    *   [ ] **Provider Abstraction Layer (PAL):** Write a standard interface to switch between providers.
+        *   *LLM:* OpenAI, Anthropic, Gemini **vs** Ollama, vLLM, LMStudio.
+        *   *Image:* DALL-E 3 **vs** Flux, Stable Diffusion (via A1111/ComfyUI API).
+        *   *TTS:* ElevenLabs **vs** Coqui XTTS (Local), OpenVoice.
+*   **Database Schema:**
+    *   [ ] Design `Projects` table: Each project has its own `settings` (to override global settings if needed).
+    *   [ ] Design `Providers` table: Store encrypted API Keys and Endpoint URLs.
 
-### ✅ Detailed Checklist & Tasks
+#### 2. The "Settings Center" UI (Week 2)
+*This is a critical requirement to support flexible providers.*
+*   **Global Settings Page:**
+    *   [ ] LLM management UI: Dropdown to choose Provider (Ollama/OpenAI...), input Base URL, API Key, Model Name.
+    *   [ ] Tools management UI: Toggle Search (Tavily/DDG), Image (Flux/DALL-E).
+    *   [ ] **Connection Test:** "Test Connection" button to immediately verify API Key or Local Host status.
+*   **Project Settings:**
+    *   [ ] Allow overriding default settings per specific project (Example: Project A uses GPT-4, Project B uses local Llama 3 for security).
 
-#### 1. Frontend (Dual-Stream UX)
-- [ ] **Split Pane Layout:** Cột trái (Main Editor/Chat) - Cột phải (Context/Sub-chat).
-- [ ] **Context Action:**
-    - [ ] Bôi đen text cột trái $\rightarrow$ Hiện nút "Ask AI" $\rightarrow$ Mở cột phải.
-- [ ] **Bridge Mechanism:**
-    - [ ] Nút "Inject to Main": Lấy nội dung tóm tắt từ cột phải, chèn vào context của cột trái.
+#### 3. Basic Tools & Circuit Breaker (Week 3)
+*   **Tool Integration (Hard-coded logic first):**
+    *   [ ] **Search Tool:** Tavily (Cloud) & DuckDuckGo (Free/Local friendly).
+    *   [ ] **RAG Lite (Basic):** Upload PDF/Txt -> Chunking -> Vector Store (ChromaDB/PGVector) -> Retrieve top k chunks.
+    *   [ ] **Media Tools:** Connect simple Image generation API and TTS.
+*   **Safety Mechanism (Circuit Breaker):**
+    *   [ ] **Step Limiter:** Middleware in LangGraph counts steps (`recursion_limit`). If > 15 steps -> Automatically stop and report an error.
+    *   [ ] **Cost Estimator (Basic):** Basic input/output token counting, warn if exceeding threshold (for paid APIs).
 
-#### 2. Workflow Logic (Code-based)
-- [ ] **YAML Workflows:** Định nghĩa các quy trình chuẩn bằng file YAML (VD: `blog_post_workflow.yaml`).
-    - *Lợi ích:* Contributor có thể viết workflow mà không cần sửa code Python.
-- [ ] **Workflow Visualization (Read-only):**
-    - [ ] Dùng `ReactFlow` hoặc `Mermaid` để render file YAML thành sơ đồ khối trên UI.
-    - [ ] Highlight node đang chạy (Real-time status qua WebSocket).
-
-#### 3. Advanced Safety (Circuit Breaker v2)
-- [ ] **Token Counter:** Đếm token input/output.
-- [ ] **Cost Guard:** Tự động ngắt nếu chi phí ước tính vượt quá $X (nếu dùng API trả phí).
-- [ ] **Loop Detection:** Phát hiện nếu Agent lặp lại cùng một câu trả lời 3 lần liên tiếp.
-
----
-
-## 🚩 PHASE 3: EXTENSIBILITY & PRODUCTION READY (Tuần 9 - 12)
-**Mục tiêu:** Chuẩn hóa hệ thống để cộng đồng đóng góp (MCP) và tối ưu hóa RAG/Memory.
-
-### 🎯 Deliverable (Kết quả bàn giao)
-1.  Hệ thống Plugin qua chuẩn MCP.
-2.  Hybrid RAG (Graph + Vector) để nhớ style người dùng.
-3.  Docker Compose "1-Click" cho người dùng phổ thông.
-
-### ✅ Detailed Checklist & Tasks
-
-#### 1. MCP Implementation (Chuẩn hóa Tools)
-- [ ] **MCP Client:** Refactor các tools ở Phase 1 (Search, Image, TTS) thành các **MCP Servers** độc lập.
-- [ ] **Tool Registry:** File `registry.json` để quản lý danh sách tools.
-- [ ] **Contributor Guide:** Hướng dẫn viết tool mới (VD: Tool lấy dữ liệu chứng khoán, Tool gửi Email).
-
-#### 2. Advanced Memory (RAG Upgrade)
-- [ ] **User Persona:** Lưu trữ "Style viết" của user vào Vector DB để Agent bắt chước giọng văn.
-- [ ] **Graph Knowledge (Optional/Lite):** Thử nghiệm Neo4j hoặc NetworkX để lưu mối quan hệ giữa các nhân vật/khái niệm trong Project.
-
-#### 3. DevOps & Polish
-- [ ] **Docker Profiles:**
-    - [ ] `docker-compose.yml` (Standard): Dùng OpenAI/Cloud API.
-    - [ ] `docker-compose.local.yml`: Kèm sẵn service Ollama + Qdrant/Chroma self-hosted.
-- [ ] **CI/CD:** Github Actions để test các Workflow YAML tự động.
-- [ ] **Documentation:** Viết Wiki đầy đủ cho User và Developer.
+#### 4. The "Genesis" Flow (Week 4 - Demo Time)
+*   **Main Chat Interface:**
+    *   [ ] Basic Chat UI: Show Message History, Markdown rendering.
+    *   [ ] **Context Sidebar:** Show list of files uploaded into the Project (RAG).
+*   **End-to-End Test:**
+    *   [ ] User creates Project "Podcast AI".
+    *   [ ] User config Settings: LLM = Ollama (Llama 3), Image = Flux.
+    *   [ ] User chat: "Please research the topic of AI Agents from the PDF file I just uploaded, write a podcast script, and create a cover image."
+    *   [ ] **Result:** The system returns Text (Script) + Image (Cover) + Audio (30s Intro) in the same chat frame.
 
 ---
 
-### 💡 Gợi ý cho Contributor (Good First Issues)
+### 🧱 Phase 2: The "Dual-Stream" & Deep Context (Week 5 - 8)
+**Goal:** Upgrade the UX with "Contextual Chat" and complete the RAG implementation.
 
-Để thu hút cộng đồng ngay từ Phase 1, bạn có thể tạo các Issue sau trên GitHub:
+#### 1. Dual-Stream UI/UX (Week 5-6)
+*   **Split View Interface:**
+    *   [ ] Split layout: Main Artifact (Article/Script) on the left - Chat/Agent on the right.
+    *   [ ] **Highlight Action:** Highlight text on the left -> Show tooltip "Ask AI" or "Refine".
+*   **Sub-Thread Architecture:**
+    *   [ ] Create a separate child `Thread` for each "Ask AI".
+    *   [ ] **Bridge Injection Logic:** "Apply to Main" button in the sub-flow -> Call LLM to synthesize changes and update the main content on the left.
 
-1.  **"Add new TTS Provider":** Viết function Python wrapper cho ElevenLabs hoặc OpenAI TTS.
-2.  **"Improve PDF Parser":** Tối ưu hóa cách cắt file PDF (Chunking strategy) cho RAG.
-3.  **"Add Dark Mode":** UI task đơn giản cho Frontend dev.
-4.  **"Create Prompt Template":** Viết file YAML prompt cho các tác vụ như "Viết bài SEO", "Tóm tắt Video".
+#### 2. Advanced RAG & Knowledge (Week 7)
+*   **Knowledge Base Upgrade:**
+    *   [ ] Support multiple formats: Docx, MD, Youtube URL (extract transcript).
+    *   [ ] **Source Citation:** When the Agent answers from RAG, it must show numbers [1], [2] linking back to the original text passages in the document.
+    *   [ ] **NotebookLM Style:** "Audio Overview" feature - Summarize the entire document into a conversational Audio file (leveraging the TTS tool built in Phase 1).
 
-Roadmap này đảm bảo bạn có **Tech (Phase 1)** $\rightarrow$ **UX (Phase 2)** $\rightarrow$ **Ecosystem (Phase 3)** mà không bị sa lầy vào việc code những tính năng chưa cần thiết.
+#### 3. Local-First Optimization (Week 8)
+*   **Offline Mode:**
+    *   [ ] Package a Docker Compose profile `local-only`: Automatically pull Ollama, Qdrant/Chroma, Stable Diffusion container.
+    *   [ ] Test performance when running the full stack locally.
+
+---
+
+### 🛠️ Phase 3: Workflows & Visualization (Week 9 - 12)
+**Goal:** Allow users to intervene in the Agent’s reasoning process (customizable logic).
+
+#### 1. Code-based Workflows (YAML Templates) (Week 9-10)
+*   **Template Engine:**
+    *   [ ] Define a YAML structure for Workflows:
+        ```yaml
+        name: "Youtube Short Generator"
+        steps:
+          - research: { source: "google_trends", topic: "{input}" }
+          - script: { model: "gpt-4", style: "viral" }
+          - image: { model: "flux", prompt: "{script.scene_1}" }
+        ```
+    *   [ ] **Workflow Runner:** Backend parses the YAML file and builds a Dynamic LangGraph based on that structure.
+*   **Community Library:**
+    *   [ ] Create a repo containing sample YAML files for users to import (e.g., "Blog SEO Writer", "Email Responder").
+
+#### 2. Visual Viewer (Read-only) (Week 11)
+*   **Pipeline Visualization:**
+    *   [ ] Integrate React Flow.
+    *   [ ] **Live Tracing:** When the Agent runs a YAML/Template file, the UI highlights nodes in real time (running Research step -> running Writing step...).
+    *   [ ] *Note:* View-only, no drag-and-drop editing yet to avoid complexity.
+
+#### 3. Advanced Management & Analytics (Week 12)
+*   **Dashboard:**
+    *   [ ] Token usage statistics per Project.
+    *   [ ] Detailed Agent error logs.
+*   **Release Beta v0.9:**
+    *   [ ] Full Documentation.
+    *   [ ] Installation tutorial video: Local vs Cloud.
+
+---
+
+### ✅ Contributor Checklist
+
+To ensure progress, you can create GitHub Issues based on this checklist:
+
+**Backend (Python/FastAPI):**
+- [ ] Implement `LLMProviderFactory` (Support OpenAI, Ollama interfaces).
+- [ ] Implement `ToolBase` class (Search, ImageGen, TTS).
+- [ ] Setup LangGraph State Checkpointer (Postgres).
+- [ ] Build `CircuitBreakerMiddleware` for infinite loop prevention.
+- [ ] Implement `YAMLWorkflowParser`.
+
+**Frontend (Next.js/React):**
+- [ ] Build `SettingsPage` with encrypted local storage for API keys (or send to backend vault).
+- [ ] Build `ProjectDashboard` (Grid view).
+- [ ] Implement `DualStreamLayout` (Resizable panes).
+- [ ] Build `ChatInterface` with Multi-modal rendering (Display Image/Audio cards).
+- [ ] Implement `ReactFlow` viewer for Agent state visualization.
+
+**DevOps/AI:**
+- [ ] Dockerize `Ollama` service setup script.
+- [ ] Optimize `pgvector` indexing for RAG.
+- [ ] Create default prompts/personas for "Main Director Agent".
+
+---
+
+With this Roadmap, you solve the **"chicken-and-egg"** problem:
+1.  **Within the first month:** You have a usable product (Vertical Slice).
+2.  **Open Source Friendly:** Support Local LLM/Tools immediately.
+3.  **Scalable:** The Project structure and Settings UI lay the foundation for future expansion.
