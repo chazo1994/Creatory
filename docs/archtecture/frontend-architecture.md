@@ -1,56 +1,42 @@
-# Frontend Architecture (Creatory Studio V0)
+# Frontend Architecture (Creator Studio)
 
-Frontend source is located in `creatory_studio/` and follows Next.js App Router with `src/` layout.
+Frontend source lives in `creatory_studio/` and follows Next.js App Router.
 
-## 1. Structure
+## Core Modules
 
-```text
-creatory_studio/
-└── src/
-    ├── app/
-    │   ├── chat/
-    │   ├── library/
-    │   └── settings/
-    ├── components/
-    ├── hooks/
-    ├── lib/
-    └── store/
-```
+- `DualChatPanel`: main stream + quick stream with `Add to Main Project` context injection.
+- `WorkflowPanel`: visual workflow renderer/editor powered by React Flow.
+- `AssetsPanel`: media storage listing and quick add.
+- `PromptLabPanel`: create custom agent personas from UI.
+- `SettingsCenter`: provider catalog, connection test, and routing preview.
 
-## 2. Core UI Modules
+## Data Layer
 
-- `StudioApp`: authentication/workspace/conversation shell and module composition.
-- `DualChatPanel`: main stream + quick stream + one-click context injection.
-- `WorkflowPanel`: React Flow-based workflow visualization and run status.
-- `AssetsPanel`: media asset listing and quick add.
-- `PromptLabPanel`: quick agent persona creation.
-- `SettingsCenter`: PAL provider catalog, connection test, routing preview.
+- `@tanstack/react-query` for API query/mutation orchestration.
+- `zustand` store (`creatory_studio/src/store/studio-store.ts`) for global session/workspace/thread state.
+- API client (`creatory_studio/src/lib/api.ts`) maps directly to backend endpoints.
 
-## 3. State & Data Layer
+## UI Direction
 
-- Server state: TanStack Query
-- Client session state: Zustand (`src/store/studio-store.ts`)
-- API client: `src/lib/api.ts`
-- Domain types: `src/lib/types.ts`
+- Bento grid layout with glassmorphism-style panels.
+- Color theme uses warm paper tones + accent orange + signal teal.
+- Responsive design supports desktop and mobile by collapsing grid sections.
 
-## 4. Reusable Hooks
+## Runtime Flow
 
-- `src/hooks/use-context-injection.ts`: encapsulates side-thread -> main-thread injection mutation.
-- `src/hooks/use-run-stream.ts`: SSE run stream consumption for orchestration progress.
+1. User logs in/registers.
+2. Workspace is selected/created.
+3. Conversation is selected/created.
+4. Threads are loaded (`main`, `quick`).
+5. Dual chat sends prompt to orchestration endpoint.
+6. Assistant response from quick stream can be injected into main stream context.
+7. Workflow panel can run templates and show step states.
 
-## 5. Routing
+## Current Update (Initialization Phase)
 
-- `/chat`: full creator studio runtime
-- `/library`: project/library module shell
-- `/settings`: provider settings center (PAL)
+- Studio routes are split into `/chat`, `/library`, and `/settings`.
+- Reusable hooks now include run stream listener and context injection helper under `creatory_studio/src/hooks/`.
 
-## 6. UX Direction (Current)
+## Environment
 
-- Bento-like panel composition
-- Warm paper palette with teal/orange signals
-- Desktop-first multi-panel layout with mobile collapse behavior
-
-## 7. Runtime Contract with Backend
-
-- Default backend base URL: `NEXT_PUBLIC_API_URL` (default `http://localhost:8000/api/v1`)
-- All studio modules use `/api/v1/*` typed endpoints.
+- `NEXT_PUBLIC_API_URL` controls backend URL (default: `http://localhost:8000/api/v1`).

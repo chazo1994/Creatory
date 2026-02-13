@@ -1,108 +1,128 @@
-## Creatory Framework Architecture V0 (Bootstrap-Aligned)
 
-This document describes the architecture currently implemented in this repository after the V0 refactor.
+## 🏗️ Creatory Technical Design V0 (Full)
 
-### 1. Monorepo Layout
+### 1. Project Structure (High-Level Overview)
 
 ```text
 creatory/
-├── creatory_core/            # Backend intelligence engine
-│   ├── agents/               # Agent personas and orchestration hooks
-│   ├── providers/            # Provider Abstraction Layer (PAL)
-│   ├── api/                  # FastAPI routes (/api/v1/*)
-│   ├── db/                   # ORM models and session layer
-│   ├── rag/                  # Hybrid retrieval logic
-│   ├── services/             # Bridge, workflow runtime, bootstrap services
-│   ├── schemas/              # Pydantic contracts
-│   ├── main.py               # API entrypoint
-│   └── worker.py             # Orchestrator worker entrypoint
-├── creatory_studio/          # Frontend studio (Next.js)
-│   └── src/
-│       ├── app/
-│       │   ├── chat/         # Main dual-stream studio page
-│       │   ├── library/      # Project/library module shell
-│       │   └── settings/     # Provider settings center
-│       ├── components/       # UI modules (chat/workflow/assets/prompt/settings)
-│       ├── hooks/            # Reusable UI hooks (SSE, context injection)
-│       ├── lib/              # API client + types
-│       └── store/            # Zustand global state
-├── mcp/                      # MCP toolbox
-│   ├── servers/
-│   ├── registry/
-│   └── sdk/
-├── workflows/                # Shared workflow DNA
-│   ├── templates/
-│   └── schemas/
-├── infra/                    # Deployment assets
-│   ├── docker-compose.yml
-│   └── docker-compose.dev.yml
-└── docs/
+├── creatory_core/           # 🧠 The "Brain" (Backend Engine)
+│   ├── agents/              # Multi-Agent Orchestration & Personas
+│   ├── providers/           # 🔌 [NEW] Provider Abstraction Layer (PAL) for llm and model services (egs: openai, gemini, vllm, ollam,...).
+│   ├── api/                 # Interface layer (Versioned via URL routing)
+│   ├── db/                  # Persistent data & Vector storage
+│   ├── rag/                 # Knowledge retrieval (Hybrid Vector + Graph)
+│   ├── services/            # Core business & bridge logic
+│   └── main.py              # Application entry point
+├── creatory_studio/         # 🎨 The "Workshop" (Frontend Interface)
+│   ├── src/
+│   │   ├── app/             # Application routing & page structure
+│   │   │   ├── chat/        # 💬 The Main Interface (Chat-First UX)
+│   │   │   ├── library/     # 📂 (Was Dashboard) Simple Sidebar for History
+│   │   │   └── settings/    # ⚙️ Provider & Key Management
+│   │   ├── components/      # UI modules (Chat, Workflow Visualizer, Library)
+│   │   ├── hooks/           # Reusable frontend logic (SSE, Context Injection)
+│   │   ├── lib/             # Utility functions & API clients
+│   │   └── store/           # Global state management (Zustand)
+├── mcp/                     # 🛠 The "Toolbox" (Model Context Protocol)
+│   ├── servers/             # Individual tool servers (Media, Web, Git)
+│   ├── registry/            # Tool discovery & manifest management
+│   └── sdk/                 # Internal protocol communication layer
+├── workflows/               # 🧬 The "DNA" (Shared Blueprints)
+│   ├── templates/           # Pre-defined agentic pipeline recipes
+│   └── schemas/             # JSON/YAML structure definitions
+├── docs/                    # 📚 The "Manual" (Documentation)
+├── infra/                   # 🚢 The "Factory" (Deployment & CI/CD)
+└── docker-compose.yml       # Root compatibility (primary compose files are in `infra/`)
+
 ```
 
-### 2. Backend Modules
+---
 
-#### 2.1 Director and Stateful Orchestration
+### 2. Module Definitions & Strategic Purpose
 
-- Director runtime: `creatory_core/services/director.py`
-- Chat execution endpoint: `POST /api/v1/orchestration/conversations/{conversation_id}/threads/{thread_id}/chat`
-- SSE run stream: `GET /api/v1/orchestration/runs/{run_id}/stream`
+#### 🧠 `creatory_core` (Backend Intelligence)
 
-#### 2.2 Bridge Injector
+* **`agents/`**: This is the heart of the "Intellectual OS."
+* **Purpose:** To host the **Main Director Agent** (Planning/Delegation) and the **Explainer Agent** (Contextual Q&A). It uses stateful logic (LangGraph) to maintain the long-term context of a content project.
 
-- Injection service: `creatory_core/services/bridge.py`
-- API endpoint: `POST /api/v1/conversations/{conversation_id}/inject`
-- Behavior: writes `context_injections` + injects system context message into target thread.
+* **providers/ (The Hybrid Adaptor)**:
+* **Purpose**: Decouples the system from specific AI vendors.
 
-#### 2.3 PAL (Provider Abstraction Layer)
+* **`api/`**: The system's gateway.
+* **Purpose:** Exposes functionality to the Studio. Versioning (e.g., `/api/v1/`) is implemented at the routing level in code, keeping the folder structure flat and maintainable.
 
-- Provider catalog + test: `creatory_core/providers/`
-- API endpoints:
-  - `GET /api/v1/providers/catalog`
-  - `POST /api/v1/providers/test`
-  - `POST /api/v1/providers/routing/preview`
 
-#### 2.4 Hybrid RAG
+* **`rag/`**: The Hybrid Knowledge Engine.
+* **Purpose:** Combines semantic search (Vector) with relational mapping (Graph) to ensure agents understand the Creator’s specific niche, style, and history.
 
-- Retrieval service: `creatory_core/rag/hybrid.py`
-- API endpoint: `POST /api/v1/knowledge/query`
-- Behavior: lexical chunk retrieval + concept-graph bonus + citation list.
 
-#### 2.5 Circuit Breaker
+* **`services/`**: The "Glue" Logic.
+* **Purpose:** Contains the **Bridge Service** for injecting sub-thread context into the main conversation and the **Workflow Runtime** for converting visual nodes into executable AI tasks.
 
-- Safety guard: `creatory_core/services/circuit_breaker.py`
-- Enforced in director/workflow runtime with `CIRCUIT_BREAKER_MAX_STEPS`.
 
-### 3. Workflow System
 
-- Template source of truth: `workflows/templates/*.yaml`
-- Bootstrap loader: `creatory_core/services/workflow_catalog.py`
-- Workspace default template import: `creatory_core/services/workspace_bootstrap.py`
-- Runtime execution: `creatory_core/services/workflow_runner.py`
-- Schema contract: `workflows/schemas/workflow_template.schema.json`
+#### 🎨 `creatory_studio` (Frontend Studio)
 
-### 4. MCP System
+* **`app/chat/` (The Chat-First UX)**: The Dual-Interaction interface.
+* **Purpose:** Manages the Main Conversation and the **Contextual Popups**. It handles text selection triggers and the "Injection" UI. Also have project management.
 
-- Registry manifest: `mcp/registry/default_manifest.yaml`
-- Schema: `mcp/registry/manifest.schema.json`
-- API endpoint: `GET /api/v1/mcp/registry/manifest`
+* **`components/workflow/`**: The Visual Reasoning Editor.
+* **Purpose:** Built on **React Flow**, this allows creators to tweak the "Agentic Workflow" (not code) using a drag-and-drop interface.
 
-### 5. Frontend Studio
 
-- Main runtime UI: `creatory_studio/src/components/studio-app.tsx`
-- Dual-stream UI: `creatory_studio/src/components/dual-chat-panel.tsx`
-- Settings Center: `creatory_studio/src/components/settings-center.tsx`
-- Workflow visualization: `creatory_studio/src/components/workflow-panel.tsx`
+* **`store/`**: Session & Context Management.
+* **Purpose:** Uses **Zustand** to keep track of active threads, selected text context, and media asset states across the studio panels.
 
-### 6. Deployment and Runtime
 
-- Compose files live in `infra/`.
-- Root `Makefile` maps commands to `infra/docker-compose*.yml`.
-- Backend container entrypoint: `scripts/run_api.sh` -> `creatory_core.main:app`.
 
-### 7. Current Phase Note
+#### 🛠 `mcp` (External Capabilities)
 
-This is the bootstrap implementation for the initial phase:
+* **`servers/`**: Standardized plugin hosts.
+* **Purpose:** To keep the core lean. Capabilities like video generation (Sora) or deep web research (Firecrawl) live here as independent servers that communicate via the Model Context Protocol.
 
-- Workflow editor is currently view/run-first (not full drag-edit persistence).
-- Provider connection checks are bootstrap-safe runtime validations (no secret vault yet).
-- MCP execution path remains mock-friendly while manifest and contracts are stabilized.
+
+* **`registry/`**: The Tool Catalog.
+* **Purpose:** Allows the Director Agent to dynamically "discover" what tools are available without manual code updates.
+
+
+
+#### 🧬 `workflows` (Agentic Blueprints)
+
+* **`templates/`**: The "Community Recipes."
+* **Purpose:** Stores shareable pipeline definitions (e.g., "YouTube to TikTok Viral Pipeline"). Being at the root level allows these to be easily shared or updated across the ecosystem.
+
+
+
+---
+
+### 3. Module Communication Architecture
+
+Creatory uses a specific protocol stack to ensure a professional, production-ready feel:
+
+1. **Streaming (SSE):** `creatory_core` streams AI responses to `creatory_studio` via **Server-Sent Events** to provide that "living" chat experience.
+2. **Context Injection (The Bridge):** When a creator "Injects" a sub-thread, a service call within the `core` merges the `Sub-Thread State` into the `Main Thread State` as a system-level update.
+3. **Visual Sync (WebSockets):** The Workflow Editor uses WebSockets to show real-time progress as an Agent moves through different nodes in a pipeline.
+4. **Tool Execution (MCP):** Agents call tools using **JSON-RPC** over the MCP standard, ensuring any community-built tool can be integrated instantly.
+
+---
+
+### 4. Implementation Notes (Production Readiness)
+
+* **Versioning Strategy:** Implemented via `APIRouter(prefix="/v1")` in the Python code, allowing the project to remain organized while supporting future API iterations.
+* **Multi-Modal Pipeline:** The `rag` and `storage` modules are designed to handle not just text, but image metadata and audio transcripts, aligning with the "Creator-First" multi-modal requirement.
+* **Human-in-the-Loop:** The `workflow_engine` includes a "Wait" state logic, which stops backend execution until a user signal is received from the Studio.
+
+### 4.1. Update Status (Initialization Phase)
+
+* **Bridge Injector Runtime:** Side-thread injection now writes system context blocks through backend service for main-thread reuse.
+* **PAL Bootstrap:** Provider catalog + connection test + routing preview are available via API and Studio Settings.
+* **Hybrid RAG Bootstrap:** Knowledge query endpoint supports citation-style context blocks.
+* **Workflow Source of Truth:** Starter workflow definitions are loaded from `workflows/templates/*.yaml`.
+
+---
+
+### 🚀 Final Summary
+
+This V0 design provides a scalable foundation for a multi-agent creator platform. It cleanly separates the **AI Reasoning (Core)** from the **User Workspace (Studio)** and provides a standardized way to expand capabilities via **MCP**.
+
+**Would you like me to generate the `docker-compose.yml` file and a basic `.env.example` to help you initialize this exact folder structure on your machine?**
