@@ -154,16 +154,16 @@ Giao diện được thiết kế theo phong cách **Bento Grid** hiện đại,
 # docker-compose.yml (Phác thảo)
 services:
   frontend:
-    build: ./frontend
+    build: ./creatory_studio
     ports: ["3000:3000"]
     environment: [NEXT_PUBLIC_API_URL]
     
   backend-api:
-    build: ./backend
+    build: .
     depends_on: [db, redis]
     
   agent-orchestrator:
-    build: ./agents
+    build: .
     # Chạy LangGraph / LangServe
     
   db:

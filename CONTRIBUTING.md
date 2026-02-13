@@ -1,141 +1,125 @@
 # Contributing to Creatory
 
-Creatory is a creator-first, agent-centric framework for building content pipelines.
-This guide defines how to contribute safely and consistently.
+Creatory is a creator-first open-source framework for multi-agent content production.
+This guide defines contribution rules for a stable and extensible ecosystem.
 
-## 1. Project Principles
+## 1. Core Principles
 
-- Creator-first UX: each feature should improve creator quality, speed, or control.
-- Agent orchestration first: tools are coordinated by agents, not isolated utilities.
-- Human-in-the-loop by default: creators can review and override key steps.
-- Reusable workflows: successful pipelines should be templated and shareable.
-- Production quality: tests, linting, reproducible setup, and observability are required.
+- Creator-first: optimize creator control, speed, and output quality.
+- Agent-centric: tools are orchestrated by agents, not isolated scripts.
+- Human-in-the-loop: critical creative outputs require review checkpoints.
+- Extensible by design: add capabilities via MCP or workflow templates.
+- Production quality: typed schemas, tests, and reproducible runtime.
 
-## 2. Contribution Areas
+## 2. Repo Layout
 
-1. MCP Tools: add MCP servers/tools for generation, editing, scraping, search, analytics.
-2. Agent Personas: add specialized agents for specific creator workflows.
-3. Workflow Templates: add reusable chat-based and node-based creator pipelines.
-4. Frontend Studio: improve dual-chat UX, workflow editor nodes, and media/prompt modules.
+- `creatory_core/`: backend runtime and APIs
+- `creatory_studio/`: frontend studio
+- `mcp/`: tool protocol registry + server conventions
+- `workflows/`: shareable template recipes + schemas
+- `infra/`: docker compose and deployment assets
+- `docs/`: product/architecture specs
 
-## 3. Branch and Commit Rules
+## 3. Setup
 
-- Branch naming: `feat/<name>`, `fix/<name>`, `docs/<name>`, `refactor/<name>`.
-- Commit format (Conventional Commits): `feat:`, `fix:`, `docs:`, `refactor:`, `test:`.
+```bash
+cp .env.example .env
+python3 -m venv .venv
+source .venv/bin/activate
+make install
+make migrate
+make test
+```
 
-## 4. Pull Request Requirements
+Frontend:
+
+```bash
+make frontend-install
+make frontend-dev
+```
+
+## 4. Branch & Commit Convention
+
+- Branches: `feat/<name>`, `fix/<name>`, `docs/<name>`, `refactor/<name>`, `test/<name>`
+- Commits: Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`)
+
+## 5. Pull Request Requirements
 
 Each PR should include:
 
-- Problem statement and proposed solution.
-- Scope boundaries (what is intentionally excluded).
-- Test evidence (unit/integration/e2e as relevant).
-- Backward compatibility notes.
-- Security/privacy impact for external integrations.
+- Problem statement
+- Proposed solution and scope
+- Testing evidence
+- Backward compatibility notes
+- Security/privacy impact (if external APIs/tools are involved)
 
-Keep PRs focused. Prefer small, single-purpose PRs.
+Keep PRs small and focused.
 
-## 5. MCP Tool Contribution Guide
+## 6. Contribution Tracks
 
-### 5.1 Tool Contract
+### 6.1 PAL (Provider Abstraction Layer)
 
-Each MCP tool must define:
+- Add provider specs, routing behavior, and connection checks in `creatory_core/providers/`.
+- Keep provider logic vendor-agnostic and deterministic.
+- Avoid hard-coding API keys or tenant-specific endpoints.
 
-- `tool_name`, `version`, and owner.
-- Input schema (strict JSON Schema).
-- Output schema (stable shape for downstream agents).
-- Error contract (error code, message, retry guidance).
-- Runtime constraints (timeout, rate-limit behavior, idempotency notes).
+### 6.2 MCP Tools
 
-### 5.2 Suggested Layout
+- Add or document tool manifests under `mcp/registry/`.
+- New tool contracts must define input/output schema and error shape.
+- For runtime integration, ensure each tool is traceable through invocation logs.
 
-```text
-packages/
-  mcp/
-    <tool-name>/
-      README.md
-      server.py
-      schemas/
-        input.schema.json
-        output.schema.json
-      tests/
-        test_server.py
-      examples/
-        basic_request.json
-```
+### 6.3 Workflow Templates
 
-### 5.3 MCP Checklist
+- Add YAML templates in `workflows/templates/`.
+- Validate shape against `workflows/schemas/workflow_template.schema.json`.
+- Include at least one HITL node for non-trivial generation flows.
 
-- Validate input/output against schemas.
-- Return machine-parseable errors.
-- Add at least one success test and one failure test.
-- Document auth requirements and env vars.
-- Include a minimal request example.
+### 6.4 Frontend Studio
 
-## 6. Workflow Template Guide
+- Place source under `creatory_studio/src/`.
+- Keep dual-stream UX behavior consistent.
+- Preserve API typing in `creatory_studio/src/lib/types.ts`.
 
-A workflow template PR should include:
+## 7. Code Quality Standards
 
-- Use case (example: short-form video from an article URL).
-- Node list and role of each node.
-- Human review checkpoints.
-- Required tools and expected latency/cost profile.
-- Failure handling and fallback strategy.
+- Backend:
+  - `ruff check creatory_core tests`
+  - `black --check creatory_core tests`
+- Frontend:
+  - `cd creatory_studio && npm run lint`
+  - `cd creatory_studio && npm run build`
+- Tests:
+  - `pytest`
 
-## 7. Agent Persona Guide
+## 8. Database Changes
 
-An agent persona PR should include:
+Any schema change must include:
 
-- Persona goal and boundaries.
-- System-prompt strategy and hard constraints.
-- Required tools and preferred call order.
-- Failure modes and safe fallback behavior.
-- Evaluation samples (good vs bad outputs).
+- Alembic revision (`alembic/versions/`)
+- SQL migration update (`sql/migrations/`)
+- Upgrade/downgrade notes in PR description
 
-## 8. Quality Standards
+## 9. Security & Privacy
 
-- Test non-trivial logic.
-- Keep modules cohesive and explicit.
-- Prefer typed/validated schemas over implicit maps.
-- Add logs for orchestration-critical operations.
-- Avoid hidden side effects in tool execution paths.
-- Ensure frontend changes pass `npm run lint` and `npm run build` in `frontend/`.
+- Never commit secrets or credentials.
+- Mask sensitive payloads in logs and traces.
+- Document external data flow when adding provider/tool integrations.
 
-## 9. Security and Privacy
-
-- Never commit secrets, tokens, or private credentials.
-- Mask sensitive user data in logs/traces.
-- Document retention policy when storing user data.
-- State what external data is sent to third-party services.
-
-## 10. RFC Requirements
+## 10. RFC Expectations
 
 Open an RFC issue before major changes:
 
-- Database model changes.
-- Orchestration protocol changes.
-- Workflow runtime model changes.
-- Breaking tool contract changes.
+- Breaking API contracts
+- Orchestrator state model changes
+- Workflow schema changes
+- Provider routing policy changes
 
-## 11. Database Change Rules
+## 11. Definition of Done
 
-- Any schema change must include an Alembic revision in `alembic/versions/`.
-- Keep SQL artifacts in `sql/migrations/` aligned with the revision.
-- PRs touching schema must include an upgrade path and downgrade notes.
+A contribution is done when:
 
-## 12. New Contributor Path
-
-Recommended first contributions:
-
-1. Improve docs in `docs/`.
-2. Add a small workflow template.
-3. Add tests for an existing tool or agent.
-
-## 13. Definition of Done
-
-A change is done when:
-
-- Code and docs are aligned.
-- Tests pass locally and in CI.
-- Review feedback is resolved.
-- Another contributor can use the change without verbal handoff.
+- Code, docs, and schema are aligned
+- CI-local checks pass
+- Review feedback is addressed
+- Another contributor can run and validate without private context

@@ -1,5 +1,5 @@
-from app.db.models import ThreadKind
-from app.services.director import _assistant_text, _build_plan
+from creatory_core.db.models import ThreadKind
+from creatory_core.services.director import _assistant_text, _build_plan
 
 
 def test_build_plan_for_main_thread() -> None:

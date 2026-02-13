@@ -338,6 +338,13 @@ CREATE INDEX idx_chunks_source ON knowledge_chunks(source_id);
 CREATE INDEX idx_concept_edges_src_dst ON concept_edges(src_concept_id, dst_concept_id);
 ```
 
+## 8. Provider Settings (Bootstrap Note)
+
+Provider Abstraction Layer (PAL) is implemented in code (`creatory_core/providers/`) with API-level validation endpoints.
+
+- Current phase: provider profiles are validated at runtime (catalog/test/routing preview) and are **not yet persisted** in dedicated provider tables.
+- Planned next phase: add encrypted provider profile storage at workspace/project scope.
+
 For pgvector approximate search:
 
 ```sql

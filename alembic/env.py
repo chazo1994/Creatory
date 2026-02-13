@@ -7,16 +7,17 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from app.core.config import settings
-from app.db.base import Base
-from app.db import models  # noqa: F401
+from creatory_core.core.config import settings
+from creatory_core.db.base import Base
+from creatory_core.db import models  # noqa: F401
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# Alembic uses ConfigParser interpolation; escape % in URLs (e.g. encoded passwords like %40).
+config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
 target_metadata = Base.metadata
 
 

@@ -1,0 +1,47 @@
+name: "Short Video Pipeline"
+description: "Starter agentic pipeline for short-form content production."
+version: 1
+definition_json:
+  objective: "Transform an idea into a ready-to-publish short video package"
+  category: "short-form"
+  stage: "genesis"
+nodes:
+  - node_key: "research"
+    type: "agent"
+    config_json:
+      agent: "trend-researcher"
+      output: "brief"
+    position_x: 60
+    position_y: 120
+  - node_key: "script"
+    type: "agent"
+    config_json:
+      agent: "script-writer"
+      style: "hook-value-cta"
+    position_x: 320
+    position_y: 120
+  - node_key: "visuals"
+    type: "tool"
+    config_json:
+      tool_group: "image-video-gen"
+      target_aspect_ratio: "9:16"
+    position_x: 580
+    position_y: 120
+  - node_key: "human_review"
+    type: "human_gate"
+    config_json:
+      required: true
+      label: "Creator Review"
+      approval_required: true
+    position_x: 840
+    position_y: 120
+edges:
+  - source_node_key: "research"
+    target_node_key: "script"
+    metadata_json: {}
+  - source_node_key: "script"
+    target_node_key: "visuals"
+    metadata_json: {}
+  - source_node_key: "visuals"
+    target_node_key: "human_review"
+    metadata_json: {}

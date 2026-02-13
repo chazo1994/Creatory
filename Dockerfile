@@ -15,11 +15,13 @@ RUN python -m venv "${VENV_PATH}"
 ENV PATH="${VENV_PATH}/bin:${PATH}"
 
 COPY pyproject.toml README.md ./
-COPY app ./app
+COPY creatory_core ./creatory_core
 COPY alembic ./alembic
 COPY alembic.ini ./alembic.ini
 COPY scripts ./scripts
 COPY sql ./sql
+COPY workflows ./workflows
+COPY mcp ./mcp
 
 RUN pip install --upgrade pip \
     && pip install .

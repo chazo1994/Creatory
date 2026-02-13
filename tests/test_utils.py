@@ -1,4 +1,4 @@
-from app.core.utils import slugify
+from creatory_core.core.utils import slugify
 
 
 def test_slugify_basic() -> None:

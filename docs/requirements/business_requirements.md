@@ -14,6 +14,7 @@ To build an open-source "Intellectual OS" that empowers content creators to move
 | **FR-02** | **Dual-Stream Chat** | Parallel interaction: A **Main Canvas** for the project and **Contextual Popups** for isolated, highlight-based Q&A. | P0 |
 | **FR-03** | **Bridge Injection** | Logic to summarize and "promote" insights/data from an isolated popup thread directly into the Main Project context. | P0 |
 | **FR-04** | **Agentic Node Editor** | A drag-and-drop visual interface (React Flow) to design and debug high-level Agent logic and tool chains. | P1 |
+| **FR-04A** | **Provider Settings Center (PAL)** | UI/API to manage provider catalog, test provider connectivity, and preview local-vs-cloud routing strategy. | P0 |
 
 #### B. The Creator Toolset (MCP-Driven)
 
@@ -30,3 +31,4 @@ To build an open-source "Intellectual OS" that empowers content creators to move
 * **Production Readiness:** Full **Dockerized** environments with CI/CD support for small-team deployments.
 * **Latency:** Streaming responses (SSE) for text and real-time status updates for media rendering.
 * **Safety:** Integrated **Human-in-the-Loop (HITL)** checkpoints for all creative tool outputs.
+* **Security:** Provider credentials must not be hardcoded in source and require a secure management path.

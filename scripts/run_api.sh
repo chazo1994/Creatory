@@ -11,4 +11,4 @@ exec gunicorn \
   --bind "${HOST}:${PORT}" \
   --access-logfile - \
   --error-logfile - \
-  app.main:app
+  creatory_core.main:app

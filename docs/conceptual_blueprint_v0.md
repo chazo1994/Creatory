@@ -1,5 +1,10 @@
 ## Detailed Conceptual Blueprint (Creator-First)
 
+Implementation alignment note (bootstrap phase):
+
+- Repository structure now follows `creatory_core` + `creatory_studio` + `mcp` + `workflows` + `infra`.
+- Provider Abstraction Layer (PAL), Bridge Injector, and Hybrid RAG query surface are implemented as V0 primitives.
+
 This blueprint is strictly aligned with your vision of a **Multi-Agent "Intellectual OS"** for creators.
 
 ### 1. The Core Architecture (Stateful Orchestration)

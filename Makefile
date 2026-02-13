@@ -4,10 +4,10 @@ install:
 	$(PYTHON) -m pip install -e .[dev]
 
 run:
-	uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+	uvicorn creatory_core.main:app --host 0.0.0.0 --port 8000 --reload
 
 run-worker:
-	python -m app.worker
+	python -m creatory_core.worker
 
 migrate:
 	alembic upgrade head
@@ -16,34 +16,34 @@ downgrade:
 	alembic downgrade -1
 
 lint:
-	ruff check app tests
-	black --check app tests
-	cd frontend && npm run lint
+	ruff check creatory_core tests
+	black --check creatory_core tests
+	cd creatory_studio && npm run lint
 
 format:
-	ruff check --fix app tests
-	black app tests
+	ruff check --fix creatory_core tests
+	black creatory_core tests
 
 test:
-	pytest
+	$(PYTHON) -m pytest
 
 precommit-install:
 	pre-commit install
 
 compose-up:
-	docker compose up --build
+	docker compose -f infra/docker-compose.yml up --build
 
 compose-up-dev:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+	docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up --build
 
 compose-down:
-	docker compose down
+	docker compose -f infra/docker-compose.yml down
 
 frontend-install:
-	cd frontend && npm install
+	cd creatory_studio && npm install
 
 frontend-dev:
-	cd frontend && npm run dev
+	cd creatory_studio && npm run dev
 
 frontend-build:
-	cd frontend && npm run build
+	cd creatory_studio && npm run build

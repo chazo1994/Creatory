@@ -23,6 +23,7 @@ dependencies = [
   "python-jose[cryptography]>=3.5.0,<4.0.0",
   "passlib[bcrypt]>=1.7.4,<2.0.0",
   "bcrypt==4.0.1",
+  "PyYAML>=6.0.2,<7.0.0",
   "python-multipart>=0.0.20,<1.0.0",
   "email-validator>=2.2.0,<3.0.0"
 ]
@@ -38,7 +39,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["app*"]
+include = ["creatory_core*"]
 
 [tool.black]
 line-length = 100

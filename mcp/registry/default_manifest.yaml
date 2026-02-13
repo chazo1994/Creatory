@@ -1,0 +1,49 @@
+version: 1
+servers:
+  - name: "web-suite"
+    transport: "http"
+    endpoint: "https://example.invalid/mcp/web-suite"
+    description: "Search + scrape tools for trend and factual research"
+    tools:
+      - tool_name: "web_search"
+        description: "Search real-time web sources"
+        input_schema:
+          type: object
+          properties:
+            query:
+              type: string
+          required: [query]
+        output_schema:
+          type: object
+          properties:
+            results:
+              type: array
+      - tool_name: "web_scrape"
+        description: "Extract article body and metadata"
+        input_schema:
+          type: object
+          properties:
+            url:
+              type: string
+          required: [url]
+  - name: "media-suite"
+    transport: "http"
+    endpoint: "https://example.invalid/mcp/media-suite"
+    description: "Image, video, and audio generation interfaces"
+    tools:
+      - tool_name: "generate_image"
+        description: "Generate or edit images"
+        input_schema:
+          type: object
+          properties:
+            prompt:
+              type: string
+          required: [prompt]
+      - tool_name: "generate_tts"
+        description: "Generate narration audio"
+        input_schema:
+          type: object
+          properties:
+            text:
+              type: string
+          required: [text]

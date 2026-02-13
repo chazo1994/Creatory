@@ -8,6 +8,8 @@ asyncpg<1.0.0,>=0.30.0
 gunicorn<24.0.0,>=23.0.0
 python-jose[cryptography]<4.0.0,>=3.5.0
 passlib[bcrypt]<2.0.0,>=1.7.4
+bcrypt==4.0.1
+PyYAML<7.0.0,>=6.0.2
 python-multipart<1.0.0,>=0.0.20
 email-validator<3.0.0,>=2.2.0
 
