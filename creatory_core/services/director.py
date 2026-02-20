@@ -99,7 +99,9 @@ def _assistant_text(prompt: str, thread_kind: ThreadKind, plan: list[str]) -> st
     lines.append(f"- Refinement model route: {routing.refine_provider}")
     lines.append(f"- Why: {routing.reason}")
     lines.append("")
-    lines.append("Next: choose tools for script, visuals, and voice-over, then run a draft pipeline.")
+    lines.append(
+        "Next: choose tools for script, visuals, and voice-over, then run a draft pipeline."
+    )
     return "\n".join(lines)
 
 
@@ -188,7 +190,9 @@ async def run_director_turn(
         status=RunStatus.SUCCEEDED,
         input_json={"plan": plan},
         output_json={
-            "draft_kind": "quick_reply" if thread.kind == ThreadKind.QUICK else "structured_outline",
+            "draft_kind": (
+                "quick_reply" if thread.kind == ThreadKind.QUICK else "structured_outline"
+            ),
             "draft_provider": routing.draft_provider,
             "refine_provider": routing.refine_provider,
         },

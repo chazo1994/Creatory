@@ -18,7 +18,9 @@ def normalize_context_block(source_message: Message, payload_block: dict) -> dic
     extracted_text = payload_block.get("text")
     if not isinstance(extracted_text, str) or not extracted_text.strip():
         source_text = source_message.content_json.get("text")
-        extracted_text = source_text if isinstance(source_text, str) else str(source_message.content_json)
+        extracted_text = (
+            source_text if isinstance(source_text, str) else str(source_message.content_json)
+        )
 
     return {
         "reference_id": payload_block.get("reference_id") or str(source_message.id),

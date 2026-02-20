@@ -23,7 +23,10 @@ async def list_catalog(
 ) -> list[ProviderRead]:
     # Reserved for policy checks in future phases.
     _ = current_user
-    return [ProviderRead.model_validate(item, from_attributes=True) for item in list_provider_specs(kind)]
+    return [
+        ProviderRead.model_validate(item, from_attributes=True)
+        for item in list_provider_specs(kind)
+    ]
 
 
 @router.post("/test", response_model=ProviderConnectionTestResponse)

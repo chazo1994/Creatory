@@ -1,8 +1,8 @@
 import asyncio
 import json
 import uuid
+from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
-from typing import AsyncGenerator
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -122,10 +122,7 @@ async def stream_run(
             "at": datetime.now(UTC).isoformat(),
             "stage": "start",
         }
-        yield (
-            "event: run\n"
-            f"data: {json.dumps(start_payload)}\n\n"
-        )
+        yield (f"event: run\ndata: {json.dumps(start_payload)}\n\n")
         await asyncio.sleep(0)
 
         for task in tasks:

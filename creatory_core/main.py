@@ -30,6 +30,7 @@ app.add_middleware(
 
 app.include_router(api_router, prefix=settings.api_prefix)
 
+
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     if settings.app_env.lower() == "production":

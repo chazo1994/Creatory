@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 from uuid import UUID
 
 from sqlalchemy import select
@@ -91,9 +91,7 @@ class HybridRAGService:
 
         concepts = (
             await db.scalars(
-                select(ConceptNode)
-                .where(ConceptNode.workspace_id == workspace_id)
-                .limit(400)
+                select(ConceptNode).where(ConceptNode.workspace_id == workspace_id).limit(400)
             )
         ).all()
         matches = 0

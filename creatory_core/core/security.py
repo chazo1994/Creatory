@@ -10,6 +10,7 @@ except ModuleNotFoundError:  # pragma: no cover - optional in limited local test
 try:
     from passlib.context import CryptContext
 except ModuleNotFoundError:  # pragma: no cover - optional in limited local test envs
+
     class CryptContext:  # type: ignore[no-redef]
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             _ = (args, kwargs)
@@ -25,6 +26,7 @@ except ModuleNotFoundError:  # pragma: no cover - optional in limited local test
                 "passlib is required for password hashing. "
                 "Install project dependencies before using auth endpoints."
             )
+
 
 from creatory_core.core.config import settings
 

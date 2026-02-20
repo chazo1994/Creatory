@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from creatory_core.providers.base import ProviderKind, ProviderMode, ProviderSpec
 
-
 DEFAULT_PROVIDER_CATALOG: tuple[ProviderSpec, ...] = (
     ProviderSpec(
         slug="openai",

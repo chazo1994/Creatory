@@ -16,7 +16,6 @@ from creatory_core.services.workflow_catalog import (
     load_template_file,
 )
 
-
 DIRECTOR_AGENT_SLUG = "main-director"
 
 
