@@ -1,206 +1,199 @@
-# Ý Tưởng (Brainstorming)
-- Tôi muốn xây dựng một opensource program trên github cho nhiều người cùng contribute.
-- Sản phẩm hướng đến content creator theo thiên hướng mọi thứ phục vụ việc tạo content. (Creator First).
-- Sản phẩm sử dụng AI Agent làm khung sương sống và cung cấp đầy đủ các công cụ để tạo thành content.
-- Con người, creator sẽ giao tiếp với agent để lên ý tưởng, tạo khung, kịch bản,... lựa chọn sử dụng các công cụ cần thiết để tạo content. Làm sao để agent làm trung tâm điều phối, con người lên ý tưởng, tinh chỉnh thiết kế,...
-- Con người có thể giao tiếp với agent bằng cách chat. Trong chat, cho phép con người quick question / comments + ai quick answer song song với main conversation, có thể inject info từ đoạn short conversation đó vào main conversation.
-- Agents cung cấp cho con người rất nhiều công cụ tạo content, như video generation / edition, image generation / edition, audio generation / edition, text generation / edition, web search, web scraping,…
-	- Agents: Hỗ trợ các hệ thống RAG, Hybrid RAG.
-	- Agents: Hỗ trợ mcp với các tools.
-- Sản phẩm sẽ có main agents đây là agent giúp con người (Creator) brainstorming, tinh chỉnh, hiện thực hóa ý tưởng thành những công cụ và có thể save thành những pipeline, agent workflows.
-	- Ngoài việc tinh chỉnh workflow trên main agents, người dùng còn có khu vực riêng chỉnh workflows dạng nodes. Nhưng là agentic workflow chứ không phải workflow về code. 
-Framework:
-Support production ready: Build pipeline, git pre commits, docker setup, docker compose.
-Quản lý user với database.
-Hỗ trợ nhiều loại input dữ liệu từ người dùng khác nhau.
-- Và hướng tới là chuẩn framework opensource để nhiều người có thể contribute.
-
----
-
 # 🤖 AGENTS & ORCHESTRATION FRAMEWORK (CREATOR-FIRST)
 
-Tài liệu này quy định kiến trúc, cơ chế điều phối và tiêu chuẩn đóng góp cho hệ thống **Multi-Agent** trong dự án. Mục tiêu là xây dựng một "Hệ điều hành trí tuệ" cho Content Creator.
+Tài liệu này đồng bộ với bộ tài liệu mới nhất trong `docs/` gồm: `brainstorm.md`, `conceptual_blueprint_v0.md`, `archtecture/framework_architecture_v0.md`, `archtecture/frontend-architecture.md`, `requirements/business_requirements.md`, `roadmap/product_roadmap.md`.
+Mục tiêu: Creator nghĩ, Agent điều phối, Workflow vận hành ổn định, cộng đồng mở rộng dễ dàng.
 
 ---
 
-## 🧩 1. Kiến trúc Tổng thể (Core Architecture)
+## 1. Product Vision (Creator-First)
 
-Hệ thống được xây dựng trên mô hình **Stateful Orchestration**, kết hợp giữa tính linh hoạt của Chat và sự chặt chẽ của Workflow.
-
-### 1.1. Main Director Agent (The Brain)
-
-* **Vai trò:** Là điểm chạm duy nhất của Creator. Chịu trách nhiệm giải mã ý tưởng (Intention Decoding).
-* **Nhiệm vụ:**
-* Lập kế hoạch (Planning): Chia nhỏ ý tưởng lớn thành các Task nhỏ cho Sub-agents.
-* Quản lý trạng thái (State Management): Theo dõi tiến độ của toàn bộ pipeline content.
-* Lưu trữ (Persistence): Có khả năng đóng gói các luồng xử lý thành các **Workflow Templates** để tái sử dụng.
-
-
-
-### 1.2. Dual-Stream Conversation (Innovation)
-
-Cơ chế tương tác độc quyền cho phép Creator làm việc đa nhiệm mà không mất context:
-
-* **Main Stream (Primary Thread):** Nơi định hình kịch bản, cấu trúc video, hoặc chiến dịch marketing dài hơi.
-* **Quick-Access Stream (Side-Bar Thread):**
-* Dành cho các câu hỏi nhanh, kiểm tra thông tin hoặc tạo thử mẫu ảnh/text.
-* **Bridge Injector:** Một cơ chế cho phép "đẩy" (inject) kết quả từ Side-chat vào Main Stream dưới dạng `Context Block`.
-* *Ví dụ:* Bạn tạo một đoạn voice-over hay ở side-chat, chỉ cần 1 click để "Inject" nó vào đúng vị trí trong kịch bản chính ở Main Stream.
-
-
+- Nền tảng open source cho content creator, thiết kế để cộng đồng cùng contribute.
+- Agent là trung tâm điều phối: planner, router, workflow coordinator, human-in-the-loop.
+- Creator làm việc bằng chat và workflow node-based theo hướng agentic (không code-centric).
+- Hỗ trợ mở rộng qua MCP tools, workflow templates, specialized agents.
+- Triết lý: AI làm phần nặng, con người giữ chủ quyền sáng tạo (creative sovereignty).
 
 ---
 
-## 🛠 2. Agentic Workflow & Nodes System
+## 2. Core Architecture (Stateful Orchestration)
 
-Chúng ta phân biệt rõ hai khu vực làm việc:
+Kiến trúc được tách rõ theo trách nhiệm để tránh chồng chéo.
 
-### 2.1. Chat-based Workflow (Natural Language)
+### 2.1 Director Layer (Planning + State)
 
-Creator yêu cầu: *"Hãy tạo cho tôi một video TikTok từ bài báo này"*. Main Agent sẽ tự động kích hoạt một chuỗi Agent ngầm (RAG Agent -> Script Agent -> Image Gen Agent -> Video Gen Agent).
+- Main Director Agent là điểm chạm chính cho creator.
+- Chức năng:
+  - Intention decoding từ prompt tự nhiên.
+  - Lập kế hoạch task-level cho pipeline content.
+  - Theo dõi trạng thái run/task trong conversation.
+- Phối hợp PAL để chọn route model local/cloud theo task.
+- Không chịu trách nhiệm chạy workflow graph node-by-node.
 
-### 2.2. Node-based Editor (Visual Programming)
+### 2.2 Workflow Runtime Layer (Execution)
 
-Khu vực dành cho việc tinh chỉnh chuyên sâu. Đây **không phải là Code Workflow**, mà là **Agentic Workflow**:
+- Workflow Runner thực thi template workflow theo nodes/edges.
+- Hỗ trợ human gate node (`WAITING_HUMAN`) để bắt buộc review trước khi đi tiếp.
+- Tách biệt khỏi Director để đảm bảo chat orchestration và graph execution độc lập, dễ test.
 
-* **Nodes:** Mỗi node đại diện cho một Agent Persona hoặc một Tool (MCP).
-* **Edge:** Đại diện cho luồng suy nghĩ (Reasoning Flow) và dữ liệu.
-* **Human-in-the-loop Node:** Điểm dừng bắt buộc để Creator review, chỉnh sửa kịch bản/hình ảnh trước khi chuyển sang node kế tiếp.
+### 2.3 Dual-Stream Conversation + Bridge
 
----
+- Conversation mặc định có 2 stream:
+  - Main Stream: luồng chính cho chiến lược dài.
+  - Quick Stream / Contextual Sub-Thread: luồng phụ cho thử nghiệm nhanh, quick Q&A; có thể là 1 side lane hoặc nhiều sub-thread theo ngữ cảnh.
+- Bridge Injector là backend service duy nhất để inject context block từ quick stream vào main stream.
+- Frontend chỉ gọi API inject, không re-implement business logic injection.
+- Quy ước UX từ docs:
+  - V0: split-screen main + quick.
+  - Phase mở rộng: highlight-triggered contextual popup/sub-thread.
 
-## 🧰 3. Hệ thống Tools & MCP (Model Context Protocol)
+### 2.4 Guardrails (Safety & Governance)
 
-Để dự án có thể mở rộng vô hạn bởi cộng đồng, chúng ta sử dụng chuẩn **MCP**:
-
-* **Media Suite:** Tích hợp các Engine hàng đầu (Video/Image/Audio/Text Generation & Edition).
-* **Web Suite:** Các công cụ Web Scraping (Firecrawl/Jina Reader), Web Search (Tavily/Perplexity) để cập nhật trend thời gian thực.
-* **Production Suite:** Tích hợp Git, Docker API để tự động hóa việc deploy/push content.
-
----
-
-## 📚 4. Memory & Knowledge (Hybrid RAG)
-
-Hệ thống sử dụng cơ chế **Hybrid RAG** để Agent không bao giờ "quên" phong cách của Creator:
-
-* **Vector Database:** Lưu trữ dữ liệu từ tài liệu, link web, video cũ của Creator.
-* **Graph Database:** Lưu trữ mối quan hệ giữa các concept, nhân vật, và phong cách định kỳ của Creator.
-* **Input Support:** Hỗ trợ đa dạng từ Text, Image, Audio đến các file thô từ thiết kế.
-
----
-
-## 🚢 5. Production-Ready Framework
-
-Dự án được thiết kế để triển khai ngay lập tức (Ready for Contributors):
-
-* **Core Logic:** Python (FastAPI + LangGraph).
-* **Database:** PostgreSQL (User data) + pgvector (Long-term memory).
-* **DevOps:** * `docker-compose.yml` tích hợp sẵn đầy đủ môi trường.
-* Git pre-commit hooks để check chất lượng code/prompt.
-* Quản lý User/Auth tích hợp sẵn.
-
-
+- Circuit breaker giới hạn bước chạy để ngăn infinite loops.
+- Hạn mức token/cost là guardrail bắt buộc khi mở rộng production scale.
+- Human-in-the-loop là checkpoint an toàn và chất lượng, không chỉ là UX option.
 
 ---
 
-## 🤝 6. Hướng dẫn Contributor (Contribution Guide)
+## 3. Agentic Workflow Model
 
-Chúng tôi mong đợi sự đóng góp ở 3 mảng chính:
+### 3.1 Chat-Based Workflow
 
-1. **New MCP Tools:** Viết các server MCP để kết nối thêm các công cụ AI mới (Sora, Flux, Kling, v.v.).
-2. **Workflow Templates:** Thiết kế các mẫu node-based workflow tối ưu cho các loại content khác nhau (Short-form, Podcast, Newsletter).
-3. **Specialized Agents:** Xây dựng các Agent Persona chuyên biệt (Ví dụ: Agent chuyên phân tích thuật toán TikTok, Agent chuyên chỉnh sửa màu sắc video).
+- Creator gửi prompt ở stream chính.
+- Director trả plan + routing và tạo các task orchestration.
+- Chat-based workflow là mode vận hành của Director, không phải agent riêng.
+
+### 3.2 Node-Based Workflow
+
+- Node đại diện cho agent/tool/human gate.
+- Edge đại diện cho luồng xử lý dữ liệu và điều kiện.
+- Trạng thái hiện tại (V0):
+  - Backend đã có workflow runtime đầy đủ để run template.
+  - Frontend hiện là Visual Viewer/Runner (view + run + inspect step).
+  - Node-based drag-and-drop authoring đầy đủ thuộc phase sau.
 
 ---
-Đúng là thiếu sót lớn nếu một sản phẩm **Creator-First** mà không có một giao diện (Frontend) cực đỉnh. Đối với Creator, trải nghiệm thị giác và thao tác kéo thả (UX/UI) quan trọng ngang ngửa với sức mạnh của AI.
 
-Dưới đây là phần bổ sung chi tiết về **Frontend Architecture** để đưa vào tài liệu, đảm bảo tính "Production-ready" và hỗ trợ cộng đồng dễ dàng đóng góp.
+## 4. Knowledge Layer (Hybrid RAG)
+
+- Một lớp duy nhất cho knowledge/retrieval, không tách thành nhiều module trùng chức năng.
+- V0 hiện tại:
+  - Lexical chunk ranking.
+  - Concept graph bonus scoring.
+  - Citation-based answer preview.
+- Hỗ trợ dữ liệu nguồn đa dạng qua Knowledge Source/Chunk API.
+- Hướng mở rộng theo docs: đa định dạng input (doc/link/image/audio/transcript) và citation traceability.
 
 ---
 
-## 🎨 7. Frontend Architecture: The Creator Studio
+## 5. Tools & MCP Extension Layer
 
-Giao diện được thiết kế theo phong cách **Bento Grid** hiện đại, tập trung vào việc giảm thiểu số click và tối đa hóa không gian sáng tạo.
+- MCP là chuẩn mở rộng tool runtime.
+- Phân tách rõ:
+  - Runtime/API: quản lý MCP server, tool, invocation.
+  - Registry: manifest chuẩn cho tool ecosystem.
+  - Contributor Track: hướng dẫn cách thêm MCP tools trong `CONTRIBUTING.md`.
+- Trạng thái V0: invocation hiện ở mock runtime để validate orchestration contract trước khi gắn engine thật.
+- Mục tiêu kiến trúc: thêm tools mới qua MCP mà không sửa core orchestrator.
 
-### 7.1. Tech Stack Khuyến nghị
+---
 
-* **Framework:** Next.js 14/15 (App Router) - Tối ưu SEO cho các trang public của creator.
-* **State Management:** TanStack Query (React Query) + Zustand (cho nhẹ và nhanh).
-* **UI Component:** ShadcnUI + TailwindCSS.
-* **Workflow Engine:** **React Flow** (Dành riêng cho khu vực chỉnh sửa Node-based Agentic Workflow).
-* **Real-time:** WebSockets hoặc Server-Sent Events (SSE) để stream câu trả lời từ Agent và cập nhật tiến độ render media.
+## 6. Module Map (Repo-First)
 
-### 7.2. Các phân khu chức năng (Core Modules)
+- `creatory_core/`: backend engine (api, providers, rag, services, db).
+- `creatory_studio/`: creator studio frontend (chat, library, settings, hooks).
+- `mcp/`: server conventions + registry + sdk.
+- `workflows/`: workflow templates + schemas.
+- `infra/`: deployment assets.
+- Root `docker-compose.yml`: compatibility; hạ tầng compose chuẩn đặt ở `infra/` theo tài liệu kiến trúc.
 
-| Module | Chức năng chính | Key Features |
+---
+
+## 7. Frontend Architecture (Creator Studio)
+
+### 7.1 Recommended Stack
+
+- Next.js App Router.
+- TanStack Query + Zustand.
+- TailwindCSS + component system.
+- React Flow cho workflow visualization.
+- SSE/WebSocket cho stream run/task events.
+
+### 7.2 Core Modules
+
+| Module | Vai trò | Trạng thái |
 | --- | --- | --- |
-| **Dual-Chat Interface** | Giao diện tương tác chính | Chia màn hình: Main Chat (Trái) & Side-bar Chat (Phải). Hỗ trợ Markdown, Code Highlight, và Media Preview trực tiếp. |
-| **Visual Workflow Editor** | Khu vực tùy chỉnh "khung xương" | Giao diện kéo thả Nodes. Cho phép Creator nhìn thấy luồng tư duy của Agent. Có nút "Run Step-by-Step" để debug. |
-| **Media Asset Manager** | Quản lý thành phẩm | Nơi lưu trữ ảnh, video, audio đã tạo. Có trình xem (Viewer) và trình chỉnh sửa nhanh (Quick Editor). |
-| **Prompt Engineering Lab** | Tinh chỉnh "linh hồn" Agent | Khu vực dành cho contributor và user nâng cao để test các System Prompts và Tool parameters. |
+| Dual-Chat Interface | Main + Quick stream và gửi prompt | Implemented |
+| Context Injection UX | "Add to Main Project" từ quick stream | Implemented (API-driven) |
+| Workflow Panel | Hiển thị graph + run template + step status | Implemented (Viewer/Runner) |
+| Prompt Lab / Assets / Settings | Không gian tinh chỉnh và quản trị studio | Implemented V0 |
 
-### 7.3. Cơ chế "Injection" UI (Frontend Logic)
+### 7.3 Boundary Rule
 
-* Tại Side-bar Chat, mỗi block kết quả (ví dụ một đoạn script hoặc link ảnh) sẽ có một button **"Add to Main Project"**.
-* Khi click, Frontend sẽ gán một `Reference ID` từ Side-chat vào Context của Main Chat thông qua API, giúp Agent chính nhận diện được dữ liệu đó mà không cần user phải copy-paste.
-
----
-
-## 🏗️ 8. Production-Ready Deployment (Full-stack)
-
-Để dự án thực sự là một Open Source Framework chuẩn chỉnh, cấu trúc Docker ví dụ mẫu:
-
-```yaml
-# docker-compose.yml (Phác thảo)
-services:
-  frontend:
-    build: ./creatory_studio
-    ports: ["3000:3000"]
-    environment: [NEXT_PUBLIC_API_URL]
-    
-  backend-api:
-    build: .
-    depends_on: [db, redis]
-    
-  agent-orchestrator:
-    build: .
-    # Chạy LangGraph / LangServe
-    
-  db:
-    image: ankane/pgvector # Postgres hỗ trợ Vector
-    
-  redis:
-    image: redis:alpine # Quản lý hàng chờ render media và cache chat
-
-```
+- Frontend chịu trách nhiệm UX/state.
+- Backend chịu trách nhiệm orchestration/state transition/injection normalization.
+- Không duplicate logic nghiệp vụ giữa UI và service layer.
 
 ---
 
-## 🚢 9. Hướng dẫn đóng góp Frontend (Frontend Contributors)
+## 8. Runtime Stack & Deployment Topology
 
-Chúng tôi tìm kiếm các đóng góp về:
+### 8.1 Runtime Stack
 
-1. **Custom Nodes:** Thiết kế các UI components cho từng loại Agent Node (VD: Node tạo ảnh có thanh slider chỉnh Aspect Ratio).
-2. **Theme Engine:** Hỗ trợ Dark/Light mode và các Theme tùy biến cho Creator.
-3. **Performance Optimization:** Xử lý render các danh sách media lớn (Virtual Scroll) và tối ưu hóa việc stream dữ liệu từ AI.
+- Backend: FastAPI + orchestration services.
+- Database: PostgreSQL + pgvector.
+- Cache/queue: Redis.
+- Frontend: Next.js studio.
+- Auth/User management: tích hợp trong core API.
+
+### 8.2 Deployment Topology
+
+- Local/prod baseline qua Docker Compose.
+- Services chuẩn:
+  - `db`
+  - `redis`
+  - `migrate`
+  - `api`
+  - `agent-orchestrator`
+  - `frontend`
+- Canonical deployment assets đặt tại `infra/`.
+- Root compose dùng cho compatibility tại repo root.
 
 ---
 
-## 📈 7. Roadmap Phát triển
+## 9. Current Implementation Status (Initialization Refactor)
 
-* [ ] **Sprint 1:** Core Architecture & Dual-chat Interface.
-* [ ] **Sprint 2:** RAG Integration & Basic MCP Tools (Text/Image).
-* [ ] **Sprint 3:** Visual Node Editor (Agentic Workflow).
-* [ ] **Sprint 4:** Video/Audio Generation Pipeline & Community Templates.
-* [ ] **Sprint 5:** Full hệ thống, production ready + front end.
-
----
-
-> **Motto:** Creator nghĩ - Agent thực thi - Framework lan tỏa.
+- [x] Monorepo aligned: `creatory_core/`, `creatory_studio/`, `mcp/`, `workflows/`, `infra/`.
+- [x] PAL endpoints V0: provider catalog, connection test, routing preview.
+- [x] Hybrid RAG query endpoint với citation-style response scaffold.
+- [x] Bridge injector runtime cho side-thread -> main-thread context block.
+- [x] Starter workflow templates đặt tại `workflows/templates/`.
 
 ---
 
-### Gợi ý tiếp theo cho bạn:
+## 10. Contribution Model
 
-1. Bạn có muốn tôi viết file **`CONTRIBUTING.md`** để hướng dẫn chi tiết cách một developer có thể viết một **MCP Tool** mới cho dự án này không?
-2. Hay bạn muốn tôi phác thảo **Database Schema** để quản lý các "Agent State" và "User Workflow"?
+Ưu tiên 3 hướng đóng góp:
+
+1. MCP Tools: thêm server/tool contract theo registry + runtime API.
+2. Workflow Templates: thêm template cho short-form, podcast, newsletter, campaign.
+3. Specialized Agents: persona chuyên sâu theo domain (TikTok analyst, color grading advisor, SEO copy, v.v.).
+
+Nguyên tắc:
+
+- Mọi thay đổi lớn về orchestrator/workflow schema cần RFC.
+- Đảm bảo code/docs/schema đồng bộ.
+- Tôn trọng human-in-the-loop cho tác vụ sáng tạo quan trọng.
+
+---
+
+## 11. Product Roadmap (High-Level)
+
+- [ ] Sprint 1: Core orchestration + dual-chat baseline.
+- [ ] Sprint 2: Hybrid RAG integration + basic MCP toolchain.
+- [ ] Sprint 3: Workflow visualization + robust run control.
+- [ ] Sprint 4: Video/audio pipeline + community templates.
+- [ ] Sprint 5: Full production hardening + contributor ecosystem scale.
+
+---
+
+> Motto: Creator nghĩ - Agent thực thi - Framework lan tỏa.
