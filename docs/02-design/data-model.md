@@ -1,4 +1,18 @@
-# Database Schema Draft
+# Data Model — Relational + Vector (Design Layer)
+
+> **Layer:** Design. Data contracts (the structural "how" of persistence).
+> The `node_type` enum below is **not** the source of truth for which node types
+> are usable — [workflow-model.md](workflow-model.md) §3 is, and it marks
+> `router`/`memory` as *Reserved*. The enum may list them, but templates MUST NOT
+> use Reserved types. Build status / bootstrap notes belong in
+> [`../03-implementation/v0-snapshot.md`](../03-implementation/v0-snapshot.md).
+
+> **Automation additions (design intent):** re-use & automation require new
+> contracts — template `inputs`, a `triggers`/`schedules` table, `run_mode` +
+> `trigger_id` on `workflow_runs`, and a node `cache_key`. Source of truth for
+> these is [automation.md](automation.md) §7 and
+> [workflow-model.md](workflow-model.md) §10–§11; they are not yet reflected in the
+> SQL below.
 
 This document proposes the first relational schema for Creatory using:
 
@@ -29,6 +43,10 @@ CREATE TYPE message_role AS ENUM ('user', 'assistant', 'tool', 'system');
 CREATE TYPE run_status AS ENUM ('queued', 'running', 'waiting_human', 'succeeded', 'failed', 'cancelled');
 CREATE TYPE source_type AS ENUM ('url', 'file', 'text', 'image', 'audio', 'video');
 CREATE TYPE asset_type AS ENUM ('image', 'video', 'audio', 'document');
+-- NOTE: 'router' and 'memory' are RESERVED (not yet designed). The enum lists them
+-- for forward-compat, but the DB does NOT enforce exclusion — validation MUST
+-- reject templates using Reserved types at the JSON-schema/app layer.
+-- See workflow-model.md §3 (source of truth) and divergence-log.md WF-3.
 CREATE TYPE node_type AS ENUM ('agent', 'tool', 'human_gate', 'router', 'memory');
 CREATE TYPE transport_type AS ENUM ('stdio', 'http', 'sse');
 ```
@@ -168,6 +186,11 @@ CREATE INDEX idx_tasks_run_status ON tasks(agent_run_id, status);
 ```
 
 ## 5. Workflow Templates and Runtime
+
+> **Not yet in this SQL (design intent — see [automation.md](automation.md) §7):**
+> template `inputs` declaration, a `triggers`/`schedules` table, `run_mode` +
+> `trigger_id` columns on `workflow_runs`, and a node `cache_key`. These are
+> required for the re-use & automation pillar and are a planned addition.
 
 ```sql
 CREATE TABLE workflow_templates (

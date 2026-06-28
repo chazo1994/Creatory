@@ -177,8 +177,9 @@ API endpoint:
 Read:
 
 - `CONTRIBUTING.md`
-- `docs/archtecture/framework_architecture_v0.md`
-- `docs/conceptual_blueprint_v0.md`
+- `docs/README.md` — documentation map (concept / design / implementation layers)
+- `docs/02-design/architecture.md`
+- `docs/02-design/workflow-model.md`
 - `docs/roadmap/product_roadmap.md`
 
 ## License

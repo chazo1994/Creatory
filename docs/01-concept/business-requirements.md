@@ -1,5 +1,9 @@
 ## 📋 Business Requirements Document (BRD)
 
+> **Layer:** Concept. Product-level requirements (the *what*). Structural "how"
+> for each FR lives in [`../02-design/`](../02-design/). See the docs map in
+> [`../README.md`](../README.md).
+
 ### 1. Vision Statement
 
 To build an open-source "Intellectual OS" that empowers content creators to move from **Idea to Execution** using a multi-agent AI system. Creatory bridges the gap between raw imagination and professional production by providing an environment where AI manages the heavy lifting while the human retains creative sovereignty.
@@ -15,6 +19,7 @@ To build an open-source "Intellectual OS" that empowers content creators to move
 | **FR-03** | **Bridge Injection** | Logic to summarize and "promote" insights/data from an isolated popup thread directly into the Main Project context. | P0 |
 | **FR-04** | **Agentic Node Editor** | A drag-and-drop visual interface (React Flow) to design and debug high-level Agent logic and tool chains. | P1 |
 | **FR-04A** | **Provider Settings Center (PAL)** | UI/API to manage provider catalog, test provider connectivity, and preview local-vs-cloud routing strategy. | P0 |
+| **FR-04B** | **Workflow Re-use & Automation** | Save a trusted Director-generated workflow as a reusable, parameterized recipe; re-run it with new inputs; and schedule/trigger it to **produce content autonomously** (the "idea → finished product" pipeline, with human approval before anything ships). | P1 |
 
 #### B. The Creator Toolset (MCP-Driven)
 

@@ -1,6 +1,19 @@
-# Frontend Architecture (Creator Studio)
+# Frontend Architecture (Creator Studio) — Design Layer
+
+> **Layer:** Design. Module boundaries and runtime flow for the Studio. Current
+> build status lives in
+> [`../03-implementation/v0-snapshot.md`](../03-implementation/v0-snapshot.md).
+> Backend orchestration boundaries are in [orchestration.md](orchestration.md).
 
 Frontend source lives in `creatory_studio/` and follows Next.js App Router.
+
+## Role Boundaries
+
+- Frontend MUST focus on UX and client-side state orchestration.
+- Backend MUST own state transitions and business invariants.
+- Frontend MUST NOT duplicate backend orchestration logic, and MUST NOT decide
+  business injection semantics (it calls the Bridge API — see
+  [orchestration.md](orchestration.md) §4).
 
 ## Core Modules
 
@@ -31,11 +44,6 @@ Frontend source lives in `creatory_studio/` and follows Next.js App Router.
 5. Dual chat sends prompt to orchestration endpoint.
 6. Assistant response from quick stream can be injected into main stream context.
 7. Workflow panel can run templates and show step states.
-
-## Current Update (Initialization Phase)
-
-- Studio routes are split into `/chat`, `/library`, and `/settings`.
-- Reusable hooks now include run stream listener and context injection helper under `creatory_studio/src/hooks/`.
 
 ## Environment
 
