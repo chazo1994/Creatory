@@ -1,118 +1,134 @@
 # 🗺️ CREATORY: VERTICAL SLICE ROADMAP
 
 **Philosophy:** "Ship early, ship complete features."
-**Core Tech Stack:** FastAPI, LangGraph, Next.js 15, PostgreSQL (pgvector), Docker.
+**Core Tech Stack:** FastAPI, Next.js 15, PostgreSQL (pgvector), Docker, MCP.
 
 ---
 
 ### 📌 Progress Update (Initialization Refactor)
 
-*   [x] Monorepo aligned with `creatory_core/`, `creatory_studio/`, `mcp/`, `workflows/`, `infra/`.
-*   [x] Base PAL endpoints added (`catalog`, `test connection`, `routing preview`).
-*   [x] Hybrid RAG query endpoint + citation-style response scaffold added.
-*   [x] Bridge Injector runtime connected for side-thread -> main-thread context block injection.
-*   [x] Starter workflow templates moved to `workflows/templates/`.
+* [x] Monorepo aligned with `creatory_core/`, `creatory_studio/`, `mcp/`, `workflows/`, `infra/`.
+* [x] Base PAL endpoints added (`catalog`, `test connection`, `routing preview`).
+* [x] Hybrid RAG query endpoint + citation-style response scaffold added.
+* [x] Bridge Injector runtime connected for side-thread -> main-thread context block injection.
+* [x] Starter workflow templates moved to `workflows/templates/`.
+* [x] Workflow tables and bootstrap runner/viewer landed for the first static template path.
 
 ---
 
-### 📦 Phase 1: The "Genesis" Slice (Week 1 - 4)
-**Goal:** Build the skeleton and **01 complete use-case** (Example: "Create a Podcast Script with a cover image and a sample voiceover"). Users can configure providers directly in the UI.
+### 🔀 Delivery Pivot (Workflow-First)
 
-#### 1. Infrastructure & Core Backend (Week 1)
-*   **Architecture Setup:**
-    *   [x] Initialize Monorepo: `/creatory_core` (FastAPI), `/creatory_studio` (Next.js), `/workers` (Celery/Arq for background tasks).
-    *   [ ] **Provider Abstraction Layer (PAL):** Write a standard interface to switch between providers.
-        *   *LLM:* OpenAI, Anthropic, Gemini **vs** Ollama, vLLM, LMStudio.
-        *   *Image:* DALL-E 3 **vs** Flux, Stable Diffusion (via A1111/ComfyUI API).
-        *   *TTS:* ElevenLabs **vs** Coqui XTTS (Local), OpenVoice.
-*   **Database Schema:**
-    *   [ ] Design `Projects` table: Each project has its own `settings` (to override global settings if needed).
-    *   [ ] Design `Providers` table: Store encrypted API Keys and Endpoint URLs.
+For the next delivery slice, **workflow execution, automation, and MCP-backed module
+composition move up to Phase 1**.
 
-#### 2. The "Settings Center" UI (Week 2)
-*This is a critical requirement to support flexible providers.*
-*   **Global Settings Page:**
-    *   [ ] LLM management UI: Dropdown to choose Provider (Ollama/OpenAI...), input Base URL, API Key, Model Name.
-    *   [ ] Tools management UI: Toggle Search (Tavily/DDG), Image (Flux/DALL-E).
-    *   [ ] **Connection Test:** "Test Connection" button to immediately verify API Key or Local Host status.
-*   **Project Settings:**
-    *   [ ] Allow overriding default settings per specific project (Example: Project A uses GPT-4, Project B uses local Llama 3 for security).
-
-#### 3. Basic Tools & Circuit Breaker (Week 3)
-*   **Tool Integration (Hard-coded logic first):**
-    *   [ ] **Search Tool:** Tavily (Cloud) & DuckDuckGo (Free/Local friendly).
-    *   [ ] **RAG Lite (Basic):** Upload PDF/Txt -> Chunking -> Vector Store (ChromaDB/PGVector) -> Retrieve top k chunks.
-    *   [ ] **Media Tools:** Connect simple Image generation API and TTS.
-*   **Safety Mechanism (Circuit Breaker):**
-    *   [ ] **Step Limiter:** Middleware in LangGraph counts steps (`recursion_limit`). If > 15 steps -> Automatically stop and report an error.
-    *   [ ] **Cost Estimator (Basic):** Basic input/output token counting, warn if exceeding threshold (for paid APIs).
-
-#### 4. The "Genesis" Flow (Week 4 - Demo Time)
-*   **Main Chat Interface:**
-    *   [ ] Basic Chat UI: Show Message History, Markdown rendering.
-    *   [ ] **Context Sidebar:** Show list of files uploaded into the Project (RAG).
-*   **End-to-End Test:**
-    *   [ ] User creates Project "Podcast AI".
-    *   [ ] User config Settings: LLM = Ollama (Llama 3), Image = Flux.
-    *   [ ] User chat: "Please research the topic of AI Agents from the PDF file I just uploaded, write a podcast script, and create a cover image."
-    *   [ ] **Result:** The system returns Text (Script) + Image (Cover) + Audio (30s Intro) in the same chat frame.
+- The immediate goal is to prove the **execution kernel** of Creatory first:
+  reusable workflows, scheduling, HITL, auditability, and module execution.
+- **Native chat and model-first UX are intentionally de-emphasized for now.**
+  During this slice, the team MAY use existing operator tools such as
+  **Codex** and **Claude Code** for workflow authoring, assisted execution, and
+  manual testing.
+- This is a **delivery-order change**, not a product-scope reduction. Product
+  requirement priorities in the BRD remain valid; we are simply pulling the
+  OPERATE pillar forward because it de-risks the core platform sooner.
 
 ---
 
-### 🧱 Phase 2: The "Dual-Stream" & Deep Context (Week 5 - 8)
-**Goal:** Upgrade the UX with "Contextual Chat" and complete the RAG implementation.
+### 📦 Phase 1: Workflow Kernel & Automation Slice (Week 1 - 4)
+**Goal:** Build a reusable, schedulable workflow kernel and **01 complete flow**
+that can run manually or autonomously with explicit HITL and MCP-backed modules.
 
-#### 1. Dual-Stream UI/UX (Week 5-6)
-*   **Split View Interface:**
-    *   [ ] Split layout: Main Artifact (Article/Script) on the left - Chat/Agent on the right.
-    *   [ ] **Highlight Action:** Highlight text on the left -> Show tooltip "Ask AI" or "Refine".
-*   **Sub-Thread Architecture:**
-    *   [ ] Create a separate child `Thread` for each "Ask AI".
-    *   [ ] **Bridge Injection Logic:** "Apply to Main" button in the sub-flow -> Call LLM to synthesize changes and update the main content on the left.
+#### 1. Workflow Runtime Correctness (Week 1)
+* **Graph Execution Core:**
+  * [ ] Update the workflow runner to execute by **edge traversal** in topological order.
+  * [ ] Reject `router` and `memory` in template validation until they are designed.
+  * [ ] Preserve `WAITING_HUMAN` as a durable run state and add **approve/resume** flow.
+  * [ ] Add step-level tracing that makes node eligibility, execution, skip, and pause states auditable.
+* **Template Contracts:**
+  * [ ] Add template `inputs` and bind them into runs via `input_json`.
+  * [ ] Add reserved support hooks for `join_policy` and per-node `output_schema`.
+  * [ ] Keep `condition_expr` disabled until the expression grammar is designed.
 
-#### 2. Advanced RAG & Knowledge (Week 7)
-*   **Knowledge Base Upgrade:**
-    *   [ ] Support multiple formats: Docx, MD, Youtube URL (extract transcript).
-    *   [ ] **Source Citation:** When the Agent answers from RAG, it must show numbers [1], [2] linking back to the original text passages in the document.
-    *   [ ] **NotebookLM Style:** "Audio Overview" feature - Summarize the entire document into a conversational Audio file (leveraging the TTS tool built in Phase 1).
+#### 2. Automation Contracts & Scheduler (Week 2)
+* **Run Model:**
+  * [ ] Add `run_mode` (`interactive` / `autonomous`) to workflow runs.
+  * [ ] Add `trigger_id` to workflow runs and persist trigger provenance.
+  * [ ] Add node `cache_key` support for idempotent re-runs.
+* **Triggers & Policies:**
+  * [ ] Add trigger CRUD for `manual`, `scheduled`, and `event`.
+  * [ ] Implement `hitl_policy`: `approve_to_publish`, `pause_resume`, `auto_approve`.
+  * [ ] Add sink configuration: Asset Library draft or MCP publish target.
+  * [ ] Add bounded retry / backoff / dead-letter handling for autonomous runs.
 
-#### 3. Local-First Optimization (Week 8)
-*   **Offline Mode:**
-    *   [ ] Package a Docker Compose profile `local-only`: Automatically pull Ollama, Qdrant/Chroma, Stable Diffusion container.
-    *   [ ] Test performance when running the full stack locally.
+#### 3. MCP / Module Execution Layer (Week 3)
+* **Execution Adapters:**
+  * [ ] Replace mock MCP invocation with real transport-backed execution.
+  * [ ] Support the minimum viable server/tool registry needed for workflow steps.
+  * [ ] Add secure config/secret resolution for module execution.
+* **Module Set for the First Flow:**
+  * [ ] Research/search module.
+  * [ ] File/document ingestion module.
+  * [ ] Media generation module set (`image`, `tts`, optionally `video`).
+  * [ ] Publish/export module via MCP sink.
+
+#### 4. Thin Operator Surface (Week 4)
+* **Control Plane, Not Chat-First UI:**
+  * [ ] Template CRUD and run APIs finalized for operator use.
+  * [ ] Trigger CRUD and schedule inspection.
+  * [ ] Run detail, step detail, approval queue, and resume/approve endpoints.
+  * [ ] Minimal Studio or admin surface for viewing runs and approving human gates.
+* **Authoring Mode for This Slice:**
+  * [ ] Accept manual YAML/JSON template authoring.
+  * [ ] Accept Codex / Claude Code-assisted authoring as an interim operator workflow.
+  * [ ] Defer native Director-generated workflow authoring to a later phase.
+
+#### 5. End-to-End Demo Outcome
+* [ ] Author a workflow template for a repeatable content task.
+* [ ] Run it manually with `interactive` mode and pause at a `human_gate`.
+* [ ] Approve/resume and complete the run to a draft asset or MCP sink.
+* [ ] Re-run the same workflow with new `inputs`.
+* [ ] Schedule the workflow as an `autonomous` run with an auditable trigger.
 
 ---
 
-### 🛠️ Phase 3: Workflows & Visualization (Week 9 - 12)
-**Goal:** Allow users to intervene in the Agent’s reasoning process (customizable logic).
+### 🧱 Phase 2: Operator Studio, Knowledge, and Local-First (Week 5 - 8)
+**Goal:** Make the workflow kernel practical for repeated daily operation without
+depending on the future chat surface.
 
-#### 1. Code-based Workflows (YAML Templates) (Week 9-10)
-*   **Template Engine:**
-    *   [ ] Define a YAML structure for Workflows:
-        ```yaml
-        name: "Youtube Short Generator"
-        steps:
-          - research: { source: "google_trends", topic: "{input}" }
-          - script: { model: "gpt-4", style: "viral" }
-          - image: { model: "flux", prompt: "{script.scene_1}" }
-        ```
-    *   [ ] **Workflow Runner:** Backend parses the YAML file and builds a Dynamic LangGraph based on that structure.
-*   **Community Library:**
-    *   [ ] Create a repo containing sample YAML files for users to import (e.g., "Blog SEO Writer", "Email Responder").
+#### 1. Operator Surfaces & Review UX (Week 5-6)
+* [ ] Approval inbox for HITL-gated runs.
+* [ ] Run history, retry controls, failure logs, and trigger health.
+* [ ] Asset draft review and sink status tracking.
 
-#### 2. Visual Viewer (Read-only) (Week 11)
-*   **Pipeline Visualization:**
-    *   [ ] Integrate React Flow.
-    *   [ ] **Live Tracing:** When the Agent runs a YAML/Template file, the UI highlights nodes in real time (running Research step -> running Writing step...).
-    *   [ ] *Note:* View-only, no drag-and-drop editing yet to avoid complexity.
+#### 2. Settings, Knowledge, and Asset Contracts (Week 6-7)
+* [ ] Workspace/project settings for module and provider overrides where needed.
+* [ ] Knowledge ingestion beyond bootstrap: PDF, MD, Docx, transcript-like sources.
+* [ ] Asset Library integration as a first-class workflow sink/source.
 
-#### 3. Advanced Management & Analytics (Week 12)
-*   **Dashboard:**
-    *   [ ] Token usage statistics per Project.
-    *   [ ] Detailed Agent error logs.
-*   **Release Beta v0.9:**
-    *   [ ] Full Documentation.
-    *   [ ] Installation tutorial video: Local vs Cloud.
+#### 3. Local-First Operations (Week 8)
+* [ ] Package a `local-only` Docker Compose profile for the workflow stack.
+* [ ] Validate local-first execution paths for search, storage, and media modules.
+* [ ] Harden secret/config handling for self-hosted operators.
+
+---
+
+### 🛠️ Phase 3: Director-Native Authoring, Chat, and Visual Editing (Week 9 - 12)
+**Goal:** Bring back the conversational product layer on top of a stable execution
+kernel.
+
+#### 1. Director-Native Workflow Authoring (Week 9-10)
+* [ ] Implement the Director path that emits workflow traces/graphs from user intent.
+* [ ] Allow saving successful traces as reusable workflow templates.
+* [ ] Re-introduce model/provider routing as a product-native capability rather than an operator-only tool.
+
+#### 2. Chat and Dual-Stream UX (Week 10-11)
+* [ ] Main conversation UI and project-aware chat state.
+* [ ] Contextual sub-thread UX and Bridge-powered apply-to-main flow.
+* [ ] Streaming responses and model-native orchestration polish.
+
+#### 3. Visual Authoring & Beta Hardening (Week 12)
+* [ ] Upgrade workflow viewer into richer authoring/debugging tools.
+* [ ] Add analytics: run cost, latency, failure classes, trigger outcomes.
+* [ ] Prepare release documentation and installation guidance.
 
 ---
 
@@ -121,27 +137,30 @@
 To ensure progress, you can create GitHub Issues based on this checklist:
 
 **Backend (Python/FastAPI):**
-- [ ] Implement `LLMProviderFactory` (Support OpenAI, Ollama interfaces).
-- [ ] Implement `ToolBase` class (Search, ImageGen, TTS).
-- [ ] Setup LangGraph State Checkpointer (Postgres).
-- [ ] Build `CircuitBreakerMiddleware` for infinite loop prevention.
-- [ ] Implement `YAMLWorkflowParser`.
+- [ ] Implement graph-based `WorkflowRuntime` traversal over `workflow_edges`.
+- [ ] Add template `inputs`, binding resolution, and reserved-type validation.
+- [ ] Build HITL resume/approve APIs and durable waiting-state handling.
+- [ ] Add `Trigger` models, scheduler integration, and `run_mode` support.
+- [ ] Replace mock MCP invocation with transport-backed execution adapters.
+- [ ] Add node retry policy, dead-letter handling, and `cache_key` support.
 
-**Frontend (Next.js/React):**
-- [ ] Build `SettingsPage` with encrypted local storage for API keys (or send to backend vault).
-- [ ] Build `ProjectDashboard` (Grid view).
-- [ ] Implement `DualStreamLayout` (Resizable panes).
-- [ ] Build `ChatInterface` with Multi-modal rendering (Display Image/Audio cards).
-- [ ] Implement `ReactFlow` viewer for Agent state visualization.
+**Frontend / Operator Surface:**
+- [ ] Build workflow run viewer with step states and human-gate actions.
+- [ ] Build trigger management and schedule inspection UI.
+- [ ] Build approval queue and draft asset review surface.
+- [ ] Keep native chat UX scoped down until the execution kernel is stable.
 
-**DevOps/AI:**
-- [ ] Dockerize `Ollama` service setup script.
-- [ ] Optimize `pgvector` indexing for RAG.
-- [ ] Create default prompts/personas for "Main Director Agent".
+**DevOps / Platform:**
+- [ ] Add worker/scheduler process for autonomous runs.
+- [ ] Harden secret storage for module/provider configs.
+- [ ] Package `local-only` stack profile for self-hosted operators.
+- [ ] Add observability for trigger outcomes and workflow step failures.
 
 ---
 
-With this Roadmap, you solve the **"chicken-and-egg"** problem:
-1.  **Within the first month:** You have a usable product (Vertical Slice).
-2.  **Open Source Friendly:** Support Local LLM/Tools immediately.
-3.  **Scalable:** The Project structure and Settings UI lay the foundation for future expansion.
+With this roadmap, Creatory solves the current sequencing problem by proving the
+hardest part of the platform first:
+1. **Phase 1 proves execution:** workflows, automation, MCP modules, and HITL.
+2. **Phase 2 makes it operable daily:** review, settings, local-first workflows.
+3. **Phase 3 restores the full product surface:** Director-native authoring, chat,
+   and richer visual UX on top of a stable kernel.

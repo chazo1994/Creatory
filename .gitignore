@@ -16,6 +16,7 @@ htmlcov/
 .idea/
 .vscode/
 !.vscode/settings.json
+.references/
 
 frontend/node_modules/
 frontend/.next/
